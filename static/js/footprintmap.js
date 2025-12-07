@@ -88,7 +88,7 @@
                     '<button type="button" class="footprint-popup__photos-btn footprint-popup__photos-btn--prev">&#10094;</button>' +
                     '<button type="button" class="footprint-popup__photos-btn footprint-popup__photos-btn--next">&#10095;</button>' : '';
                 const slides = point.photos.map((src, i) =>
-                    `<figure class="footprint-popup__slide"><img src="${h(src)}" loading="lazy" alt="${h(point.name)}-${i+1}"></figure>`
+                    `<figure class="footprint-popup__slide"><div class="footprint-popup__slide-loader"></div><img src="${h(src)}" loading="lazy" alt="${h(point.name)}-${i+1}"></figure>`
                 ).join('');
                 html += `<div class="footprint-popup__photos"${point.photos.length > 1 ? ' data-carousel="true"' : ''}>${nav}<div class="footprint-popup__track">${slides}</div></div>`;
             }
@@ -110,6 +110,7 @@
             el.innerHTML = `
                 <div class="footprint-photo-viewer__mask"></div>
                 <div class="footprint-photo-viewer__dialog">
+                    <div class="footprint-photo-viewer__loader"></div>
                     <button type="button" class="footprint-photo-viewer__close">&times;</button>
                     <button type="button" class="footprint-photo-viewer__prev">&#10094;</button>
                     <img src="" alt="" />
@@ -136,7 +137,27 @@
 
         function update() {
             if (!state.images.length) return;
+            const loader = el.querySelector('.footprint-photo-viewer__loader');
+            
+            // 显示加载指示器，隐藏图片
+            if (loader) loader.style.display = 'block';
+            imgEl.classList.remove('loaded');
+            
+            // 设置图片源
             imgEl.src = state.images[state.index];
+            
+            // 图片加载完成后隐藏加载指示器
+            imgEl.onload = () => {
+                if (loader) loader.style.display = 'none';
+                imgEl.classList.add('loaded');
+            };
+            
+            // 图片加载错误时也隐藏加载指示器
+            imgEl.onerror = () => {
+                if (loader) loader.style.display = 'none';
+                imgEl.classList.add('loaded');
+            };
+            
             prevBtn.style.display = state.images.length > 1 ? '' : 'none';
             nextBtn.style.display = state.images.length > 1 ? '' : 'none';
         }
@@ -161,6 +182,31 @@
         function next() { state.index = (state.index + 1) % state.images.length; update(); }
         return { open };
     })();
+
+    // 图片加载处理
+    document.addEventListener('load', (e) => {
+        if (e.target.matches('.footprint-popup__slide img')) {
+            const img = e.target;
+            const loader = img.parentElement.querySelector('.footprint-popup__slide-loader');
+            if (loader) {
+                loader.remove();
+            }
+            img.classList.add('loaded');
+        }
+    }, true);
+
+    // 图片加载错误处理
+    document.addEventListener('error', (e) => {
+        if (e.target.matches('.footprint-popup__slide img')) {
+            const img = e.target;
+            const loader = img.parentElement.querySelector('.footprint-popup__slide-loader');
+            if (loader) {
+                loader.remove();
+            }
+            // 即使加载失败也显示图片（浏览器会显示默认的错误图标）
+            img.classList.add('loaded');
+        }
+    }, true);
 
     // 全局事件委托 (Photo / Carousel)
     document.addEventListener('click', (e) => {
