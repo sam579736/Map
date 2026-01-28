@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高德地图坐标转换工具 (AMap to Google Maps)</title>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --success-color: #52c41a;
+            --bg-color: #f0f2f5;
+            --panel-width: 380px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--bg-color); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* 顶部导航 */
+        header {
+            background: #fff;
+            height: 60px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            z-index: 100;
+        }
+        header h1 { font-size: 18px; color: #333; display: flex; align-items: center; gap: 10px; }
+        
+        /* 搜索框容器优化 */
+        .search-container { position: relative; width: 340px; display: flex; align-items: center;}
+        #search-input {
+            width: 100%; 
+            padding: 8px 36px 8px 12px; /* 右侧留出按钮空间 */
+            border: 1px solid #d9d9d9; 
+            border-radius: 4px; 
+            outline: none; 
+            transition: all 0.3s;
+        }
+        #search-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(24,144,255,0.2); }
+
+        /* 新增：搜索清除按钮 */
+        #clear-search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            display: none; /* 默认隐藏，有内容时显示 */
+            line-height: 1;
+        }
+        #clear-search-btn:hover { color: #666; }
+
+        /* 主体布局 */
+        main { display: flex; flex: 1; position: relative; height: calc(100vh - 60px); }
+        
+        /* 地图区域 */
+        #map-container { flex: 1; height: 100%; position: relative; }
+        
+        /* 信息面板 */
+        #info-panel {
+            width: var(--panel-width);
+            background: #fff;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 90;
+        }
+
+        .panel-section { padding: 20px; border-bottom: 1px solid #f0f0f0; }
+        .panel-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        
+        /* 地址显示 */
+        .address-box { 
+            background: #f9f9f9; padding: 10px; border-radius: 4px; font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 15px; 
+            min-height: 40px;
+        }
+
+        /* 坐标卡片 */
+        .coord-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 12px; margin-bottom: 12px; position: relative; }
+        .coord-card.highlight { border-color: var(--primary-color); background: #f0f7ff; }
+        .coord-type { font-size: 12px; color: #999; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .coord-value { font-family: "Monaco", "Menlo", monospace; font-size: 14px; font-weight: 500; color: #333; }
+        
+        /* 按钮组 */
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        button {
+            cursor: pointer; padding: 8px 12px; border-radius: 4px; border: 1px solid transparent; font-size: 13px; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary-color); color: #fff; }
+        .btn-primary:hover { background: #40a9ff; }
+        .btn-outline { border-color: #d9d9d9; background: #fff; color: #666; }
+        .btn-outline:hover { color: var(--primary-color); border-color: var(--primary-color); }
+        .btn-danger { color: #ff4d4f; border-color: #ffccc7; background: #fff; }
+        .btn-danger:hover { background: #fff1f0; border-color: #ff4d4f; }
+        
+        .copy-hint { font-size: 12px; color: #999; margin-top: 5px; text-align: center; }
+
+        /* 历史记录 */
+        .history-list { list-style: none; }
+        .history-item { 
+            padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.2s; position: relative;
+        }
+        .history-item:hover { background: #fafafa; }
+        .history-addr { font-size: 12px; color: #333; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
+        .history-coord { font-size: 11px; color: #999; font-family: monospace; }
+        .history-del { position: absolute; right: 10px; top: 10px; color: #999; display: none; }
+        .history-item:hover .history-del { display: block; }
+        .history-del:hover { color: #ff4d4f; }
+
+        /* Toast 提示 */
+        #toast {
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.75); color: #fff; padding: 10px 20px; border-radius: 4px;
+            font-size: 14px; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 1000;
+        }
+        #toast.show { opacity: 1; }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            header { padding: 0 10px; height: 50px; }
+            header h1 span { display: none; } /* 手机端隐藏标题文字 */
+            .search-container { width: 220px; }
+            main { flex-direction: column; }
+            #info-panel { width: 100%; height: 45vh; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+            #map-container { height: 55vh; }
+        }
+
+        /* Loading遮罩 */
+        #loader {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .config-tip { margin-top: 20px; color: #666; text-align: center; font-size: 14px; max-width: 80%; }
+        code { background: #eee; padding: 2px 4px; border-radius: 3px; font-family: monospace; }
+    </style>
+
+    <script type="text/javascript">
+        // 🔴🔴🔴 请在此处填入你的高德安全密钥 (Security Code) 🔴🔴🔴
+        window._AMapSecurityConfig = {
+            securityJsCode: 'bb7b5130e25e32893fa7cc5203bdb33d'
+        }
+    </script>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <h3>正在加载地图资源...</h3>
+        <p class="config-tip">如果长时间未加载，请检查代码中是否配置了 <code>Key</code> 和 <code>安全密钥</code>。</p>
+    </div>
+
+    <header>
+        <h1>📸 <span>坐标转换工具</span></h1>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="输入地址或地名搜索...">
+            <span id="clear-search-btn" title="清除搜索结果">✕</span>
+        </div>
+    </header>
+
+    <main>
+        <div id="map-container"></div>
+
+        <div id="info-panel">
+            <div class="panel-section">
+                <div class="panel-title">📍 当前位置</div>
+                <div class="address-box" id="current-address">点击地图选择位置...</div>
+                
+                <div class="panel-title">📡 转换结果</div>
+                
+                <div class="coord-card highlight">
+                    <div class="coord-type">
+                        <span>Google / GPS (WGS-84)</span>
+                        <span style="color: var(--primary-color);">目标格式</span>
+                    </div>
+                    <div class="coord-value" id="wgs-val">0.000000, 0.000000</div>
+                    <div class="btn-group">
+                        <button class="btn-primary" onclick="copyCoord('latlng')">复制 (纬度,经度)</button>
+                        <button class="btn-primary" onclick="copyCoord('lnglat')">复制 (经度,纬度)</button>
+                    </div>
+                    <div class="copy-hint">适合 Lightroom 直接粘贴</div>
+                </div>
+
+                <div class="coord-card">
+                    <div class="coord-type">
+                        <span>高德 / 火星坐标 (GCJ-02)</span>
+                        <span>源格式</span>
+                    </div>
+                    <div class="coord-value" id="gcj-val">0.000000, 0.000000</div>
+                </div>
+
+                <button class="btn-outline" style="width: 100%; margin-top: 10px;" onclick="clearMap()">🗑️ 清除所有标记与搜索</button>
+            </div>
+
+            <div class="panel-section" style="flex: 1;">
+                <div class="panel-title">
+                    <span>🕒 历史记录</span>
+                    <button class="btn-danger" style="font-size: 12px; padding: 2px 8px;" onclick="clearHistory()">清空</button>
+                </div>
+                <ul class="history-list" id="history-list">
+                    </ul>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast">复制成功</div>
+
+    <script src="https://webapi.amap.com/maps?v=2.0&key=db3b3fbd787df23fa18bc594bec90ac3&plugin=AMap.Geocoder,AMap.AutoComplete,AMap.PlaceSearch"></script>
+
+    <script>
+        // ... (坐标转换算法部分保持不变) ...
+        const PI = 3.1415926535897932384626;
+        const a = 6378245.0;
+        const ee = 0.00669342162296594323;
+
+        function transformLat(x, y) {
+            let ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
+            ret += (20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(y * PI) + 40.0 * Math.sin(y / 3.0 * PI)) * 2.0 / 3.0;
+            ret += (160.0 * Math.sin(y / 12.0 * PI) + 320 * Math.sin(y * PI / 30.0)) * 2.0 / 3.0;
+            return ret;
+        }
+
+        function transformLon(x, y) {
+            let ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
+            ret += (20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(x * PI) + 40.0 * Math.sin(x / 3.0 * PI)) * 2.0 / 3.0;
+            ret += (150.0 * Math.sin(x / 12.0 * PI) + 300.0 * Math.sin(x / 30.0 * PI)) * 2.0 / 3.0;
+            return ret;
+        }
+
+        function gcj02towgs84(lng, lat) {
+            if (outOfChina(lng, lat)) return [lng, lat];
+            let dlat = transformLat(lng - 105.0, lat - 35.0);
+            let dlng = transformLon(lng - 105.0, lat - 35.0);
+            let radlat = lat / 180.0 * PI;
+            let magic = Math.sin(radlat);
+            magic = 1 - ee * magic * magic;
+            let sqrtmagic = Math.sqrt(magic);
+            dlat = (dlat * 180.0) / ((a * (1 - ee)) / (magic * sqrtmagic) * PI);
+            dlng = (dlng * 180.0) / (a / sqrtmagic * Math.cos(radlat) * PI);
+            let mglat = lat + dlat;
+            let mglng = lng + dlng;
+            return [lng * 2 - mglng, lat * 2 - mglat];
+        }
+
+        function outOfChina(lng, lat) {
+            return (lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271);
+        }
+
+        // ==========================================
+        // 2. 全局状态与初始化
+        // ==========================================
+        let map, marker, geocoder;
+        let placeSearch; // 🆕 设为全局变量
+        let currentData = {
+            gcj: { lng: 0, lat: 0 },
+            wgs: { lng: 0, lat: 0 },
+            address: ''
+        };
+
+        window.onload = function() {
+            if (typeof AMap === 'undefined') {
+                alert('高德地图API加载失败！请检查代码中的 Key 和 Security Code。');
+                return;
+            }
+            initMap();
+            document.getElementById('loader').style.display = 'none';
+            renderHistory();
+            initSearchUI(); // 🆕 初始化搜索框UI逻辑
+        };
+
+        function initMap() {
+            map = new AMap.Map('map-container', {
+                zoom: 11,
+                center: [116.397428, 39.90923],
+                viewMode: '2D',
+                resizeEnable: true
+            });
+
+            geocoder = new AMap.Geocoder({
+                radius: 1000,
+                extensions: "all"
+            });
+
+            map.on('click', function(e) {
+                handleMapClick(e.lnglat.getLng(), e.lnglat.getLat());
+            });
+
+            // 搜索功能配置
+            const autoOptions = { input: "search-input" };
+            const auto = new AMap.AutoComplete(autoOptions);
+            
+            // 🆕 初始化全局 placeSearch
+            placeSearch = new AMap.PlaceSearch({ map: map });
+            
+            auto.on("select", function(e) {
+                placeSearch.setCity(e.poi.adcode);
+                placeSearch.search(e.poi.name);
+                // 显示清除按钮
+                document.getElementById('clear-search-btn').style.display = 'block';
+                
+                if(e.poi.location) {
+                    handleMapClick(e.poi.location.lng, e.poi.location.lat);
+                }
+            });
+        }
+
+        // 🆕 搜索UI交互逻辑
+        function initSearchUI() {
+            const input = document.getElementById('search-input');
+            const clearBtn = document.getElementById('clear-search-btn');
+
+            // 监听输入，控制按钮显示
+            input.addEventListener('input', function() {
+                clearBtn.style.display = this.value ? 'block' : 'none';
+            });
+
+            // 监听清除按钮点击
+            clearBtn.addEventListener('click', function() {
+                // 1. 清空输入框
+                input.value = '';
+                // 2. 隐藏按钮
+                this.style.display = 'none';
+                // 3. 清除地图上的搜索结果
+                if(placeSearch) {
+                    placeSearch.clear(); 
+                }
+            });
+        }
+
+        // ==========================================
+        // 3. 业务逻辑
+        // ==========================================
+
+        function handleMapClick(lng, lat) {
+            currentData.gcj = { lng, lat };
+            const wgsResult = gcj02towgs84(lng, lat);
+            currentData.wgs = { lng: wgsResult[0], lat: wgsResult[1] };
+            updateMarker(lng, lat);
+            geocoder.getAddress([lng, lat], function(status, result) {
+                if (status === 'complete' && result.regeocode) {
+                    currentData.address = result.regeocode.formattedAddress;
+                } else {
+                    currentData.address = "未知位置";
+                }
+                updateUI();
+                saveToHistory();
+            });
+        }
+
+        function updateMarker(lng, lat) {
+            if (marker) {
+                marker.setPosition([lng, lat]);
+            } else {
+                marker = new AMap.Marker({
+                    position: [lng, lat],
+                    map: map,
+                    animation: 'AMAP_ANIMATION_DROP'
+                });
+            }
+            map.setCenter([lng, lat]);
+        }
+
+        function updateUI() {
+            document.getElementById('current-address').innerText = currentData.address;
+            const wgsLat = currentData.wgs.lat.toFixed(6);
+            const wgsLng = currentData.wgs.lng.toFixed(6);
+            const gcjLat = currentData.gcj.lat.toFixed(6);
+            const gcjLng = currentData.gcj.lng.toFixed(6);
+            document.getElementById('wgs-val').innerHTML = `<span style="color:#666">Lat:</span> ${wgsLat}<br><span style="color:#666">Lng:</span> ${wgsLng}`;
+            document.getElementById('gcj-val').innerHTML = `${gcjLng}, ${gcjLat}`;
+        }
+
+        // 🆕 更新：清除所有标记和搜索结果
+        function clearMap() {
+            // 1. 清除选点标记
+            if (marker) marker.setMap(null);
+            marker = null;
+
+            // 2. 清除搜索结果
+            if (placeSearch) placeSearch.clear();
+            document.getElementById('search-input').value = '';
+            document.getElementById('clear-search-btn').style.display = 'none';
+
+            // 3. 重置面板
+            document.getElementById('current-address').innerText = "点击地图选择位置...";
+            document.getElementById('wgs-val').innerText = "0.000000, 0.000000";
+            document.getElementById('gcj-val').innerText = "0.000000, 0.000000";
+        }
+
+        // ==========================================
+        // 4. 辅助功能 (复制、历史记录)
+        // ==========================================
+
+        function copyCoord(format) {
+            if (!marker) {
+                showToast("请先在地图上选择位置");
+                return;
+            }
+            let text = "";
+            const lat = currentData.wgs.lat.toFixed(6);
+            const lng = currentData.wgs.lng.toFixed(6);
+            if (format === 'latlng') {
+                text = `${lat}, ${lng}`;
+            } else {
+                text = `${lng}, ${lat}`;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`复制成功: ${text}`);
+            }).catch(err => {
+                showToast("复制失败，请手动复制");
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function saveToHistory() {
+            let history = JSON.parse(localStorage.getItem('mapHistory') || '[]');
+            const newItem = {
+                address: currentData.address,
+                wgs: currentData.wgs,
+                gcj: currentData.gcj,
+                time: new Date().getTime()
+            };
+            history = history.filter(item => item.address !== newItem.address);
+            history.unshift(newItem);
+            if (history.length > 20) history.pop();
+            localStorage.setItem('mapHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('mapHistory') || '[]');
+            if (history.length === 0) {
+                list.innerHTML = '<li style="padding:10px; color:#999; text-align:center; font-size:12px;">暂无历史记录</li>';
+                return;
+            }
+            list.innerHTML = history.map((item, index) => `
+                <li class="history-item" onclick="loadHistory(${index})">
+                    <div class="history-addr" title="${item.address}">${item.address}</div>
+                    <div class="history-coord">WGS: ${item.wgs.lat.toFixed(4)}, ${item.wgs.lng.toFixed(4)}</div>
+                    <span class="history-del" onclick="deleteHistory(event, ${index})">×</span>
+                </li>
+            `).join('');
+        }
+
+        function loadHistory(index) {
+            const history = JSON.parse(localStorage.getItem('mapHistory'));
+            const item = history[index];
+            if (item) {
+                handleMapClick(item.gcj.lng, item.gcj.lat);
+            }
+        }
+
+        function deleteHistory(e, index) {
+            e.stopPropagation();
+            let history = JSON.parse(localStorage.getItem('mapHistory'));
+            history.splice(index, 1);
+            localStorage.setItem('mapHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function clearHistory() {
+            if(confirm('确定清空所有历史记录吗？')) {
+                localStorage.removeItem('mapHistory');
+                renderHistory();
+            }
+        }
+    </script>
+</body>
+</html>
