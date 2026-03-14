@@ -6,9 +6,7 @@
   <title>小十足迹地图 - Demo</title>
   <meta name="description" content="基于高德地图的纯前端足迹地图组件演示">
   
-  <!-- 引入 CSS -->
   <link rel="stylesheet" href="static/css/footprintmap.css">
-  <!-- 代码高亮样式（Highlight.js） -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
   <script defer src="https://tongji.xiaoten.com/random-string.js" data-website-id="310ac8bc-25e0-4f76-95fb-31797490c73a"></script>
   
@@ -113,8 +111,6 @@
       font-size: 0.95em;
     }
     
-    /* .map-container wrapper removed to avoid extra white padding/shadow */
-    
     #footprintMap {
       width: 100%;
       height: 700px;
@@ -128,20 +124,9 @@
     }
     .demo-toolbar button:hover, .demo-toolbar a.tip:hover { transform: translateY(-1px); }
     .dark .demo-toolbar button, .dark .demo-toolbar a.tip { background: #111827; color: #e5e7eb; border-color: rgba(255,255,255,0.12); }
-    /* Keep the API Key and Editor links in the demo toolbar visually consistent (always white) */
-    .demo-toolbar a.tip {
-      background: #fff;
-      color: #111827;
-      border-color: rgba(0,0,0,0.1);
-    }
-    .dark .demo-toolbar a.tip {
-      background: #fff;
-      color: #111827;
-      border-color: rgba(0,0,0,0.1);
-    }
-    @media (max-width: 768px) {
-      .demo-toolbar { top: auto; bottom: 80px; }
-    }
+    .demo-toolbar a.tip, .dark .demo-toolbar a.tip { background: #fff; color: #111827; border-color: rgba(0,0,0,0.1); }
+    @media (max-width: 768px) { .demo-toolbar { top: auto; bottom: 80px; } }
+    
     .api-tip { position: fixed; top: 60px; right: 16px; max-width: 320px; background: #fff; color: #374151; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 999; display: none; }
     .api-tip p { font-size: 13px; line-height: 1.6; }
     .api-tip code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; }
@@ -176,7 +161,7 @@
     }
     
     .code-block {
-      background: #f3f4f6; /* match light highlight theme */
+      background: #f3f4f6;
       color: #0f172a;
       padding: 20px;
       border-radius: 8px;
@@ -201,94 +186,29 @@
       text-decoration: none;
     }
     
-    .footer a:hover {
-      text-decoration: underline;
-    }
+    .footer a:hover { text-decoration: underline; }
     
     @media (max-width: 768px) {
-      .header {
-        padding: 30px 16px;
-      }
-      
-      .header h1 {
-        font-size: 1.8em;
-      }
-      
-      .header p {
-        font-size: 1em;
-      }
-      
-      .header .links {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        align-items: center;
-      }
-      
-      .header .links a {
-        margin: 0;
-        width: 100%;
-        max-width: 280px;
-        text-align: center;
-      }
-      
-      .container {
-        padding: 20px 12px;
-      }
-      
-      .section {
-        padding: 20px 16px;
-        margin-bottom: 20px;
-      }
-      
-      .section h2 {
-        font-size: 1.4em;
-      }
-      
-      .features {
-        gap: 12px;
-      }
-      
-      .feature-card {
-        padding: 16px;
-      }
-      
-      #footprintMap {
-        height: 500px;
-      }
-      
-      .stat-card {
-        padding: 20px 16px;
-      }
-      
-      .stat-card .number {
-        font-size: 2em;
-      }
-      
-      .code-block {
-        padding: 16px;
-        font-size: 0.85em;
-      }
-      
-      .demo-toolbar {
-        flex-direction: column;
-        width: auto;
-        right: 12px;
-        bottom: 12px;
-        gap: 6px;
-      }
-      
-      .demo-toolbar button, .demo-toolbar a.tip {
-        padding: 10px 14px;
-        font-size: 13px;
-        width: auto;
-        min-width: 100px;
-      }
+      .header { padding: 30px 16px; }
+      .header h1 { font-size: 1.8em; }
+      .header p { font-size: 1em; }
+      .header .links { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+      .header .links a { margin: 0; width: 100%; max-width: 280px; text-align: center; }
+      .container { padding: 20px 12px; }
+      .section { padding: 20px 16px; margin-bottom: 20px; }
+      .section h2 { font-size: 1.4em; }
+      .features { gap: 12px; }
+      .feature-card { padding: 16px; }
+      #footprintMap { height: 500px; }
+      .stat-card { padding: 20px 16px; }
+      .stat-card .number { font-size: 2em; }
+      .code-block { padding: 16px; font-size: 0.85em; }
+      .demo-toolbar { flex-direction: column; width: auto; right: 12px; bottom: 12px; gap: 6px; }
+      .demo-toolbar button, .demo-toolbar a.tip { padding: 10px 14px; font-size: 13px; width: auto; min-width: 100px; }
     }
   </style>
 </head>
 <body>
-  <!-- 演示工具条 -->
   <div class="demo-toolbar">
     <a href="#" class="tip" id="apiTipBtn" title="查看 API Key 填写提示">🔑 API Key</a>
     <a href="editor.html" class="tip" title="数据构建器">✏️ 编辑器</a>
@@ -316,28 +236,32 @@
           <p>纯前端实现，只需引入 JS/CSS 文件即可使用</p>
         </div>
         <div class="feature-card">
+          <h3>📍 省域遮罩联动</h3>
+          <p>原生支持 GeoJSON 边界，悬浮或点击标记点智能联动省份高亮</p>
+        </div>
+        <div class="feature-card">
           <h3>🎯 智能集群</h3>
-          <p>网格算法自动合并附近标记，提升大数据量性能</p>
+          <p>网格算法自动合并附近标记，提升大数据量展示性能</p>
         </div>
         <div class="feature-card">
           <h3>🏷️ 分类筛选</h3>
-          <p>自动提取分类标签，支持一键筛选</p>
+          <p>自动提取分类标签，支持一键筛选与地图自适应缩放</p>
         </div>
         <div class="feature-card">
           <h3>🌓 主题适配</h3>
-          <p>完美适配亮色/暗色主题，自动同步切换</p>
+          <p>完美适配亮色/暗色主题，图层与高亮色自动同步切换</p>
         </div>
         <div class="feature-card">
           <h3>📸 照片轮播</h3>
-          <p>支持多图轮播和灯箱放大查看</p>
+          <p>支持多图横向丝滑轮播与全屏灯箱放大查看</p>
         </div>
         <div class="feature-card">
           <h3>📱 移动优化</h3>
-          <p>响应式设计，完美支持移动端触控</p>
+          <p>响应式设计，抽屉式详情与手势触控全面优化</p>
         </div>
         <div class="feature-card">
           <h3>✏️ 数据构建器</h3>
-          <p>可视化编辑器，快速创建和编辑足迹数据</p>
+          <p>附带可视化编辑器，零代码快速创建和导出足迹数据</p>
         </div>
       </div>
     </div>
@@ -346,7 +270,7 @@
       <h2 style="display:inline-flex; align-items:center; gap:8px;">🗺️ 在线演示
         <button id="toggleThemeBtn" title="切换演示地图主题" style="appearance:none; border:1px solid rgba(0,0,0,0.1); background:#fff; color:#111827; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:13px; box-shadow:0 2px 6px rgba(0,0,0,0.08);">🌓 地图主题</button>
       </h2>
-      <p style="color: #6b7280; margin-bottom: 20px;">点击地图上的标记查看详情，使用顶部按钮筛选分类，底部中间切换集群显示。想创建自己的足迹？试试 <a href="editor.html" style="color: #667eea; text-decoration: none; font-weight: 600;">数据编辑器 →</a></p>
+      <p style="color: #6b7280; margin-bottom: 20px;">悬浮或点击地图上的标记点可智能高亮所在省份，使用顶部按钮筛选分类。想创建自己的足迹？试试 <a href="editor.html" style="color: #667eea; text-decoration: none; font-weight: 600;">数据编辑器 →</a></p>
       <div id="footprintMap" class="footprint-map" data-json="static/data/footprints.example.json" data-amap-key="4727334ebc13608dbe9ba75266c3d41a" style="border-radius:6px; overflow:hidden;"></div>
     </div>
 
@@ -354,20 +278,20 @@
       <h2>📊 统计数据</h2>
       <div class="stats">
         <div class="stat-card">
-          <div class="number">20</div>
-          <div class="label">城市</div>
+          <div class="number">34</div>
+          <div class="label">省级行政区边界</div>
         </div>
         <div class="stat-card">
-          <div class="number">485</div>
-          <div class="label">行代码</div>
+          <div class="number">20</div>
+          <div class="label">示例城市</div>
         </div>
         <div class="stat-card">
           <div class="number">6</div>
-          <div class="label">预设颜色</div>
+          <div class="label">预设渐变主题</div>
         </div>
         <div class="stat-card">
           <div class="number">0</div>
-          <div class="label">依赖框架</div>
+          <div class="label">依赖第三方框架</div>
         </div>
       </div>
     </div>
@@ -378,31 +302,18 @@
       
       <h3 style="margin-top: 30px; margin-bottom: 15px; color: #374151;">1️⃣ 引入文件</h3>
       <pre class="code-block"><code class="language-html">&lt;!-- 引入 CSS --&gt;
-    &lt;link rel="stylesheet" href="css/footprintmap.css"&gt;
+&lt;link rel="stylesheet" href="css/footprintmap.css"&gt;
 
-    &lt;!-- 地图容器 --&gt;
-    &lt;div id="footprintMap" style="height: 600px;"&gt;&lt;/div&gt;
+&lt;!-- 地图容器 --&gt;
+&lt;div class="footprint-map" data-json="data/footprints.json" data-amap-key="你的APIKey" style="height: 600px;"&gt;&lt;/div&gt;
 
-    &lt;!-- 引入高德地图 API --&gt;
-    &lt;script src="https://webapi.amap.com/maps?v=2.0&amp;key=你的APIKey"&gt;&lt;/script&gt;
-
-    &lt;!-- 引入足迹地图 JS --&gt;
-    &lt;script src="js/footprintmap.js"&gt;&lt;/script&gt;
-    </code></pre>
-
-      <h3 style="margin-top: 30px; margin-bottom: 15px; color: #374151;">2️⃣ 初始化地图</h3>
-      <pre class="code-block"><code class="language-javascript">&lt;script&gt;
-  const footprintMap = new FootprintMap({
-    container: 'footprintMap',
-    dataUrl: 'data/footprints.json',
-    amapKey: '你的高德地图APIKey'
-  });
-&lt;/script&gt;
+&lt;!-- 引入足迹地图 JS --&gt;
+&lt;script src="js/footprintmap.js"&gt;&lt;/script&gt;
 </code></pre>
 
-      <h3 style="margin-top: 30px; margin-bottom: 15px; color: #374151;">3️⃣ 准备数据</h3>
+      <h3 style="margin-top: 30px; margin-bottom: 15px; color: #374151;">2️⃣ 准备地图与边界数据</h3>
+      <p style="font-size: 0.95em; color: #6b7280; margin-bottom: 15px;">确保你的 `static/data` 目录下拥有足迹配置文件及省级边界 GeoJSON 数据。</p>
       <pre class="code-block"><code class="language-json">{
-
   "locations": [
     {
       "name": "北京",
@@ -410,46 +321,7 @@
       "description": "中国的首都，也是我的家乡。",
       "date": "2024-05-01",
       "categories": ["2024", "旅行", "家乡"],
-      "markerColor": "sunset",
-      "photos": [
-        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg",
-        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg"
-      ],
-      "url": "https://www.xiaoten.com/posts/2025/11/amap-powered-footprintmap-shortcode/",
-      "urlLabel": "相关博客文章"
-    },
-    {
-      "name": "上海",
-      "coordinates": "121.4737,31.2304",
-      "description": "中国的经济中心，东方明珠所在地。",
-      "date": "2024-06-15",
-      "categories": ["2024", "旅行"],
-      "markerColor": "ocean",
-      "photos": [
-        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg"
-      ]
-    },
-    {
-      "name": "广州",
-      "coordinates": "113.2644,23.1291",
-      "description": "岭南文化的代表城市，美食之都。",
-      "date": "2023-12-20",
-      "categories": ["2023", "美食", "旅行"],
-      "markerColor": "forest",
-      "photos": [
-        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg"
-      ]
-    },
-    {
-      "name": "成都",
-      "coordinates": "104.0665,30.5728",
-      "description": "天府之国，熊猫的故乡。",
-      "date": "2023-10-05",
-      "categories": ["2023", "美食", "旅行"],
-      "markerColor": "violet",
-      "photos": [
-        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg"
-      ]
+      "markerColor": "sunset"
     }
   ]
 }
@@ -466,27 +338,21 @@
     </p>
   </div>
 
-  <!-- 引入足迹地图 JS -->
-  <script src="static/js/footprintmap.js?v=20251119c"></script>
+  <script src="static/js/footprintmap.js?v=20260314"></script>
   <script src="static/js/theme.js"></script>
   <script src="static/js/utils.js"></script>
-  <!-- Highlight.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
   <script>document.addEventListener('DOMContentLoaded', ()=>{ if(window.hljs && typeof hljs.highlightAll==='function') hljs.highlightAll(); });</script>
   
-  <!-- 初始化地图 -->
   <script>
-    // 若本地存储存在 amapKey，则写入容器的 data-amap-key 属性，组件会自动加载地图
     const savedKey = localStorage.getItem('amapKey') || '';
     if (savedKey) {
       const el = document.getElementById('footprintMap');
       if (el) el.setAttribute('data-amap-key', savedKey);
     }
 
-    // 主题切换逻辑由 static/js/theme.js 提供，统一为图标按钮文本
     Theme.init({ btnId: 'toggleThemeBtn', previewSelector: '#footprintMap' });
     const apiTipBtn = document.getElementById('apiTipBtn');
-    const apiTipBox = document.getElementById('apiTipBox');
 
     apiTipBtn.addEventListener('click', (e) => {
       e.preventDefault();

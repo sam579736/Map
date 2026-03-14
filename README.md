@@ -5,7 +5,7 @@
 [![AMap](https://img.shields.io/badge/AMap-2.0-06beb6)](https://lbs.amap.com/)
 [![Demo](https://img.shields.io/website?url=https%3A%2F%2Ffootprintmap.xiaoten.com%2F&label=Demo)](https://footprintmap.xiaoten.com/)
 
-一个基于高德地图的纯前端足迹地图组件，支持标记集群、分类筛选、照片轮播等功能。
+一个基于高德地图的纯前端足迹地图组件，支持标记集群、分类筛选、照片轮播以及省域边界智能联动高亮功能。
 
 简体中文 | [在线演示](https://footprintmap.xiaoten.com/)
 
@@ -15,13 +15,14 @@
 ## ✨ 特性
 
 - 🗺️ **纯静态实现** - 纯前端，无需后端，仅需引入 JS/CSS 文件
+- 📍 **智能省域联动** - 原生集成 `AMap.GeoJSON` 插件，标记点悬浮/点击可智能反查并联动对应省级行政区划的高亮（完美支持多边形/岛屿/飞地）
 - 🎯 **智能标记集群** - 网格算法自动合并附近标记，提升大数据量展示性能
 - 🏷️ **分类筛选** - 自动提取分类标签，支持一键筛选
 - 🌓 **主题自适应** - 完美适配亮色/暗色主题，自动同步切换
 - 📸 **照片展示** - 支持多图轮播和灯箱放大查看
 - 📱 **移动端优化** - 响应式设计，触控友好
 - 🎨 **自定义标记** - 6种预设渐变色 + 自定义颜色支持
-- ⚡ **性能优化** - 精简代码（475行 JS），按需加载
+- ⚡ **性能优化** - 精简代码（475行 JS），基于状态驱动优化图层渲染，按需加载
 - 🧭 **自定义控件** - 在地图右上角（或移动端右下）提供「重载视图 / 全屏 / 放大 / 缩小」四个控件，避免和地图原生控件重叠并支持暗黑主题。
 - 🔌 **即插即用** - 支持任何网站：WordPress、Hexo、Jekyll、Hugo 等
 
@@ -47,9 +48,7 @@
 <head>
   <meta charset="UTF-8">
   <title>我的足迹地图</title>
-  <!-- 引入 CSS（本地或 CDN，二选一） -->
   <link rel="stylesheet" href="css/footprintmap.css">
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Jiosanity/XiaoTen-FootprintMap@v1.3.0/static/css/footprintmap.css"> -->
   <style>
     .footprint-map { width: 100%; height: 600px; }
   </style>
@@ -57,33 +56,29 @@
     // 可选：在运行时写入本地存储中的 Key（也可直接在容器 data-amap-key 上写）
     localStorage.setItem('amapKey', '你的高德地图APIKey');
   </script>
-  <!-- 引入 JS（本地或 CDN，二选一） -->
   <script defer src="js/footprintmap.js"></script>
-  <!-- <script defer src="https://cdn.jsdelivr.net/gh/Jiosanity/XiaoTen-FootprintMap@v1.3.0/static/js/footprintmap.js"></script> -->
-  <!-- 无需单独引入高德地图脚本，组件会按需加载（仅支持高德 AMap） -->
-  <!-- 无需手写 new FootprintMap(...)，组件会自动初始化 -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <link rel="icon" href="data:,">
-  <link rel="preconnect" href="https://webapi.amap.com">
-  <link rel="dns-prefetch" href="https://webapi.amap.com">
-  <link rel="dns-prefetch" href="https://a.amap.com">
-  <link rel="dns-prefetch" href="https://vdata.amap.com">
-  <link rel="dns-prefetch" href="https://restapi.amap.com">
-  <link rel="dns-prefetch" href="https://lbs.amap.com">
-  <link rel="dns-prefetch" href="https://webapi.amap.com">
-  <link rel="dns-prefetch" href="https://jiosanity.github.io">
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="dns-prefetch" href="https://fastly.jsdelivr.net">
-  <link rel="dns-prefetch" href="https://gcore.jsdelivr.net">
+  <link rel="preconnect" href="[https://webapi.amap.com](https://webapi.amap.com)">
+  <link rel="dns-prefetch" href="[https://webapi.amap.com](https://webapi.amap.com)">
+  <link rel="dns-prefetch" href="[https://a.amap.com](https://a.amap.com)">
+  <link rel="dns-prefetch" href="[https://vdata.amap.com](https://vdata.amap.com)">
+  <link rel="dns-prefetch" href="[https://restapi.amap.com](https://restapi.amap.com)">
+  <link rel="dns-prefetch" href="[https://lbs.amap.com](https://lbs.amap.com)">
+  <link rel="dns-prefetch" href="[https://webapi.amap.com](https://webapi.amap.com)">
+  <link rel="dns-prefetch" href="[https://jiosanity.github.io](https://jiosanity.github.io)">
+  <link rel="dns-prefetch" href="[https://cdn.jsdelivr.net](https://cdn.jsdelivr.net)">
+  <link rel="dns-prefetch" href="[https://fastly.jsdelivr.net](https://fastly.jsdelivr.net)">
+  <link rel="dns-prefetch" href="[https://gcore.jsdelivr.net](https://gcore.jsdelivr.net)">
 </head>
 <body>
-  <!-- 地图容器：至少提供数据源地址 data-json；amap-key 可选（也可走 localStorage） -->
   <div class="footprint-map"
        data-json="data/footprints.json"
        data-amap-key="可选：直接写你的Key"></div>
 </body>
 </html>
+
 ```
 
 ### 2. 准备数据
@@ -103,7 +98,10 @@
     }
   ]
 }
+
 ```
+
+*提示：为支持省域遮罩联动功能，请确保项目中包含 `provinces.geojson` 数据文件（默认读取路径可通过配置文件修改）。*
 
 ### 3. 获取 API Key
 
@@ -111,7 +109,7 @@
 
 ### 4. 完成！
 
-直接打开 HTML 文件或通过本地服务器访问即可看到地图。详细文档请查看 [安装指南](docs/installation.md)。
+直接打开 HTML 文件或通过本地服务器访问即可看到地图。详细文档请查看 [安装指南](https://www.google.com/search?q=docs/installation.md)。
 
 ## 📖 文档
 
@@ -124,53 +122,61 @@
 
 | 预设名称 | 效果 | 使用方式 |
 |---------|------|---------|
-| sunset | ![](https://via.placeholder.com/80x20/ffb347/ffb347?text=+) → ![](https://via.placeholder.com/80x20/ff6f61/ff6f61?text=+) | `"markerColor": "sunset"` |
-| ocean | ![](https://via.placeholder.com/80x20/06beb6/06beb6?text=+) → ![](https://via.placeholder.com/80x20/48b1bf/48b1bf?text=+) | `"markerColor": "ocean"` |
-| violet | ![](https://via.placeholder.com/80x20/a18cd1/a18cd1?text=+) → ![](https://via.placeholder.com/80x20/fbc2eb/fbc2eb?text=+) | `"markerColor": "violet"` |
-| forest | ![](https://via.placeholder.com/80x20/5ee7df/5ee7df?text=+) → ![](https://via.placeholder.com/80x20/39a37c/39a37c?text=+) | `"markerColor": "forest"` |
-| amber | ![](https://via.placeholder.com/80x20/f6d365/f6d365?text=+) → ![](https://via.placeholder.com/80x20/fda085/fda085?text=+) | `"markerColor": "amber"` |
-| citrus | ![](https://via.placeholder.com/80x20/fdfb8f/fdfb8f?text=+) → ![](https://via.placeholder.com/80x20/a1ffce/a1ffce?text=+) | `"markerColor": "citrus"` |
+| --- | --- | --- |
+| sunset | → | `"markerColor": "sunset"` |
+| ocean | → | `"markerColor": "ocean"` |
+| violet | → | `"markerColor": "violet"` |
+| forest | → | `"markerColor": "forest"` |
+| amber | → | `"markerColor": "amber"` |
+| citrus | → | `"markerColor": "citrus"` |
 
 也可以使用自定义颜色：`"markerColor": "#ff6b6b"` 或 `"markerColor": "rgb(255,107,107)"`
 
 ## 🔧 使用要点
 
-- 容器：使用类名 `footprint-map` 的元素作为地图容器，建议通过 CSS 设定高度。
-- 数据：通过 `data-json` 指定 JSON 数据地址。
-- Key：通过 `data-amap-key` 或 `localStorage('amapKey')` 提供高德 Key。
-- 初始化：无需手写 JS 初始化，组件会在 DOMContentLoaded 后自动扫描并挂载。
-- 主题：当页面根节点存在 `.dark` 类时自动切换为暗色地图样式。
+* 容器：使用类名 `footprint-map` 的元素作为地图容器，建议通过 CSS 设定高度。
+* 数据：通过 `data-json` 指定 JSON 数据地址。
+* Key：通过 `data-amap-key` 或 `localStorage('amapKey')` 提供高德 Key。
+* 初始化：无需手写 JS 初始化，组件会在 DOMContentLoaded 后自动扫描并挂载。
+* 主题：当页面根节点存在 `.dark` 类时自动切换为暗色地图样式。
 
 ## 🛠️ 技术栈
 
-- [高德地图 Web JS API 2.0](https://lbs.amap.com/api/jsapi-v2/summary) - 地图服务
-- Vanilla JavaScript (ES6+) - 无框架依赖
-- CSS3 - 响应式样式
+* [高德地图 Web JS API 2.0](https://lbs.amap.com/api/jsapi-v2/summary) - 地图服务
+* Vanilla JavaScript (ES6+) - 无框架依赖
+* CSS3 - 响应式样式
 
 ## 🐛 Bug修复
 
 ### 修复分类筛选时的视野过度缩放问题
 
-- **问题现象**: 当启用“集群模式”时，如果筛选的分类下的所有地点在地理上非常集中，它们会被聚合为一个或极少数几个集群点。此时地图的 `setFitView` 功能会因目标过少而判断失误，导致地图被无限放大，视野崩溃。
-- **解决方案**: 重构了 `renderMap` 函数的核心逻辑。创建了一个名为 `fitViewToPoints` 的辅助函数，该函数不再依赖于地图上实际渲染出的标记点或集群点来调整视野。而是基于筛选后的原始地理坐标数据，通过在地图上添加一个临时的、不可见的覆盖物（`AMap.Polyline`）来精确计算出能包含所有目标点的地理边界，然后命令地图缩放至此边界，完成后再移除该临时覆盖物。这从根本上解决了因集群聚合导致视野判断错误的问题，确保了在任何数据分布下都能提供稳定、正确的缩放体验。
+* **问题现象**: 当启用“集群模式”时，如果筛选的分类下的所有地点在地理上非常集中，它们会被聚合为一个或极少数几个集群点。此时地图的 `setFitView` 功能会因目标过少而判断失误，导致地图被无限放大，视野崩溃。
+* **解决方案**: 重构了 `renderMap` 函数的核心逻辑。创建了一个名为 `fitViewToPoints` 的辅助函数，该函数不再依赖于地图上实际渲染出的标记点或集群点来调整视野。而是基于筛选后的原始地理坐标数据，通过在地图上添加一个临时的、不可见的覆盖物（`AMap.Polyline`）来精确计算出能包含所有目标点的地理边界，然后命令地图缩放至此边界，完成后再移除该临时覆盖物。这从根本上解决了因集群聚合导致视野判断错误的问题，确保了在任何数据分布下都能提供稳定、正确的缩放体验。
 
 ## 📝 更新日志
 
 查看 [CHANGELOG.md](CHANGELOG.md) 了解详细的版本更新历史。
 
-### 最新版本 v1.3.0 (2025-11-19)
+### 最新版本 v1.4.0 (2026-03-14)
 
-- 🚀 **项目开源**：源码已托管至 `https://github.com/Jiosanity/XiaoTen-FootprintMap`，包含示例数据、文档与演示页面。
-- 🛠️ **新增可视化编辑器（editor.html）**：提供本地交互式编辑体验，支持地图拾取坐标、添加/编辑地点、导入示例/JSON、生成并下载 JSON、复制到剪贴板以及即时预览（含聚类、筛选、主题同步）。
-- 📱 **编辑器移动端优化**：修复按钮换行缩进、日期行在窄屏保持一行、图片查看器与轮播滚动优化等交互细节。
-- ⚡ 其它若干细节修复与文档补充（CHANGELOG 中有完整记录）。
+* ✨ **新增省域边界联动**：原生集成 `AMap.GeoJSON` 插件，支持全国省级行政区划边界渲染，完美支持复杂的多边形及岛屿飞地。
+* 🎯 **智能高亮交互**：重构事件响应机制，实现悬浮/点击标记点时，智能反查坐标所属省份并触发隐式联动高亮。
+* 🎨 **视觉体验升级**：省域遮罩默认采用透明无感设计，触发高亮时应用清新的薄荷青/海洋绿配色，深度适配暗色主题。
+* ⚡ **底层性能重构**：采用集中式状态驱动模式刷新图层样式，规避频繁的图层销毁重建，保证开关切换与事件联动的极致丝滑。
+
+### v1.3.0 (2025-11-19)
+
+* 🚀 **项目开源**：源码已托管至 `https://github.com/Jiosanity/XiaoTen-FootprintMap`，包含示例数据、文档与演示页面。
+* 🛠️ **新增可视化编辑器（editor.html）**：提供本地交互式编辑体验，支持地图拾取坐标、添加/编辑地点、导入示例/JSON、生成并下载 JSON、复制到剪贴板以及即时预览（含聚类、筛选、主题同步）。
+* 📱 **编辑器移动端优化**：修复按钮换行缩进、日期行在窄屏保持一行、图片查看器与轮播滚动优化等交互细节。
+* ⚡ 其它若干细节修复与文档补充（CHANGELOG 中有完整记录）。
 
 ### v1.2.0 (2025-11-19)
 
-- ✨ 新增 2D 地图模式，禁用旋转和倾斜
-- ⚡ 代码精简：JS 从 879 行优化到 475 行（减少 45.9%）
-- 🎨 完善黑暗模式适配（缩放控件和比例尺）
-- 🐛 修复多项 UI 细节问题
+* ✨ 新增 2D 地图模式，禁用旋转和倾斜
+* ⚡ 代码精简：JS 从 879 行优化到 475 行（减少 45.9%）
+* 🎨 完善黑暗模式适配（缩放控件和比例尺）
+* 🐛 修复多项 UI 细节问题
 
 ## 🤝 贡献
 
@@ -184,18 +190,18 @@
 
 ## 📄 开源协议
 
-本项目采用 [MIT](LICENSE) 协议开源。
+本项目采用 [MIT](https://www.google.com/search?q=LICENSE) 协议开源。
 
 ## 🙏 致谢
 
-- 灵感来源：[王叨叨的足迹管理插件](https://wangdaodao.com/20251117/amap-track.html)
-- 地图服务：[高德开放平台](https://lbs.amap.com/)
+* 灵感来源：[王叨叨的足迹管理插件](https://wangdaodao.com/20251117/amap-track.html)
+* 地图服务：[高德开放平台](https://lbs.amap.com/)
 
 ## 📧 联系方式
 
-- 作者：xiaoten
-- 网站：[xiaoten.com](https://www.xiaoten.com/)
-- Issue：[GitHub Issues](https://github.com/Jiosanity/XiaoTen-FootprintMap/issues)
+* 作者：xiaoten
+* 网站：[xiaoten.com](https://www.xiaoten.com/)
+* Issue：[GitHub Issues](https://github.com/Jiosanity/XiaoTen-FootprintMap/issues)
 
 ---
 
