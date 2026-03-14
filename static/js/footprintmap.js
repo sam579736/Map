@@ -30,7 +30,24 @@
         GRID_SIZE: 80,
         // [新增] 垂直偏移量：让 Marker 出现在屏幕中心下方的距离（px），以便完整显示上方弹窗
         OFFSET_DESKTOP: 100,
-        OFFSET_MOBILE: 140
+        OFFSET_MOBILE: 140,
+        // [新增] 省份遮罩配置
+        PROVINCE_MASK: {
+            // 默认状态：完全透明，平时不显示任何遮罩和边界
+            strokeColor: 'transparent',
+            strokeOpacity: 0,
+            strokeWeight: 0,
+            fillColor: 'transparent',
+            fillOpacity: 0,
+            
+            // 悬浮/点击高亮状态：清新薄荷青 + 海洋绿
+            highlightStroke: '#5ee7df',       // 清新的薄荷青边界线
+            highlightStrokeOpacity: 0.9,      // 边框不透明度，保证轮廓清晰
+            highlightStrokeWeight: 2,         // 边框粗细
+            highlightFill: '#06beb6',         // 柔和的海洋绿填充
+            highlightFillOpacity: 0.2         // 保持较低的透明度，微微透出底图，不喧宾夺主
+        },
+        PROVINCE_GEOJSON_URL: './static/data/provinces.geojson'
     };
 
     // --- 工具类 ---
@@ -260,6 +277,11 @@
             this.markerData = [];
             this.infoWindow = null;
             this.ignoreMapClick = false;
+            // [新增] 省份遮罩相关
+            this.provincePolygons = [];
+            this.provinceFeatures = [];
+            this.provinceMaskEnabled = true;
+            this.highlightedProvince = null;
         }
 
         async load() {
@@ -301,12 +323,18 @@
 
             this.markerData = locations;
 
+            // [新增] 异步加载省份遮罩
+            this.loadProvinces();
+
             this.updateClusters();
             this.map.on('zoomend', () => this.updateClusters());
 
             this.map.on('click', () => {
                 if (this.ignoreMapClick) return;
                 this.infoWindow.close();
+                // [新增] 点击空白地图区域时，解除省份锁定状态
+                this.lockedProvinceName = null;
+                this.refreshProvinceStyles();
             });
 
             this.fitView();
@@ -321,6 +349,7 @@
                 zoomOut: () => this.map.zoomOut(),
                 resize: () => this.map.resize(),
                 setClusterEnabled: (enabled) => { this.clusterEnabled = enabled; this.updateClusters(); },
+                setProvinceMaskEnabled: (enabled) => { this.setProvinceMaskEnabled(enabled); },
                 updateData: (data) => {
                     this.infoWindow.close(); // 筛选数据时关闭弹窗
                     this.markerData = data;
@@ -366,32 +395,49 @@
                 map: this.map
             });
 
+            // [新增] 标记点悬浮联动省份高亮
+            marker.on('mouseover', () => {
+                const pName = this.getProvinceNameByCoords([pt.lng, pt.lat]);
+                if (pName) {
+                    this.hoveredProvinceName = pName;
+                    this.refreshProvinceStyles();
+                }
+            });
+
+            // [新增] 标记点移出解除悬浮高亮
+            marker.on('mouseout', () => {
+                this.hoveredProvinceName = null;
+                this.refreshProvinceStyles();
+            });
+
             marker.on('click', () => {
                 this.ignoreMapClick = true;
                 setTimeout(() => { this.ignoreMapClick = false; }, 200);
 
+                // [新增] 点击标记点时，锁定对应的省份高亮
+                const pName = this.getProvinceNameByCoords([pt.lng, pt.lat]);
+                if (pName) {
+                    this.lockedProvinceName = pName;
+                    this.refreshProvinceStyles();
+                }
+
                 this.infoWindow.setContent(PopupBuilder.build(pt));
                 this.infoWindow.open(this.map, [pt.lng, pt.lat]);
 
-                // [修复 2] 检查内容是否溢出，如果不需要滚动则隐藏箭头
                 setTimeout(() => {
                     const popupEl = this.container.querySelector('.footprint-popup');
                     if (popupEl) {
                         const track = popupEl.querySelector('.footprint-popup__track');
                         const btns = popupEl.querySelectorAll('.footprint-popup__photos-btn');
-                        // 逻辑：如果 scrollWidth (内容宽) <= clientWidth (可视宽)，说明没溢出，隐藏按钮
-                        // 加 2px 缓冲防止计算误差
                         if (track && btns.length > 0 && track.scrollWidth <= track.clientWidth + 2) {
                             btns.forEach(btn => btn.style.display = 'none');
                         }
                     }
-                }, 50); // 延时等待 DOM 渲染
+                }, 50);
 
-                // [修复 3] 强制手动平移 (解决移动端切换 Marker 不动的问题)
                 const isMobile = window.innerWidth < 640;
                 const offsetY = isMobile ? CONFIG.OFFSET_MOBILE : CONFIG.OFFSET_DESKTOP;
                 const pixel = this.map.lngLatToContainer([pt.lng, pt.lat]);
-                // 目标中心点在 Marker 所在像素位置的上方 Y 轴 offsetY 处
                 const targetPixel = new AMap.Pixel(pixel.x, pixel.y - offsetY);
                 const newCenter = this.map.containerToLngLat(targetPixel);
                 this.map.panTo(newCenter);
@@ -433,6 +479,163 @@
             const poly = new AMap.Polyline({ path: path, strokeOpacity: 0, map: this.map });
             this.map.setFitView([poly], false, [60, 80, 60, 80]);
             this.map.remove(poly);
+        }
+
+        // [新增] 加载省份GeoJSON数据
+        async loadProvinces() {
+            try {
+                const response = await fetch(CONFIG.PROVINCE_GEOJSON_URL);
+                const geojson = await response.json();
+                this.provinceFeatures = geojson.features || [];
+                this.drawProvinces();
+            } catch (e) {
+                console.warn('加载省份数据失败:', e);
+            }
+        }
+
+        // [优化] 异步加载省份遮罩数据
+        async loadProvinces() {
+            try {
+                const response = await fetch(CONFIG.PROVINCE_GEOJSON_URL);
+                const geojsonData = await response.json();
+                this.drawProvinces(geojsonData);
+            } catch (e) {
+                console.warn('加载省份数据失败:', e);
+            }
+        }
+
+        // [新增] 根据经纬度查询所属省份名称 (空间计算)
+        getProvinceNameByCoords(lnglat) {
+            if (!this.provincePolygons || this.provincePolygons.length === 0) return null;
+            // 遍历所有多边形，判断点是否在多边形内
+            for (let i = 0; i < this.provincePolygons.length; i++) {
+                if (this.provincePolygons[i].contains(lnglat)) {
+                    return this.provincePolygons[i]._provinceName;
+                }
+            }
+            return null;
+        }
+
+        // [优化] 集中式状态刷新：根据当前 悬浮/锁定 的省份名称更新所有多边形颜色
+        refreshProvinceStyles() {
+            if (!this.provinceMaskEnabled) return;
+
+            const defaultOpts = {
+                strokeColor: CONFIG.PROVINCE_MASK.strokeColor,
+                strokeOpacity: CONFIG.PROVINCE_MASK.strokeOpacity,
+                strokeWeight: CONFIG.PROVINCE_MASK.strokeWeight,
+                fillColor: CONFIG.PROVINCE_MASK.fillColor,
+                fillOpacity: CONFIG.PROVINCE_MASK.fillOpacity
+            };
+            const highlightOpts = {
+                strokeColor: CONFIG.PROVINCE_MASK.highlightStroke,
+                strokeOpacity: CONFIG.PROVINCE_MASK.highlightStrokeOpacity,
+                strokeWeight: CONFIG.PROVINCE_MASK.highlightStrokeWeight,
+                fillColor: CONFIG.PROVINCE_MASK.highlightFill,
+                fillOpacity: CONFIG.PROVINCE_MASK.highlightFillOpacity
+            };
+
+            this.provincePolygons.forEach(polygon => {
+                // 如果当前多边形属于被锁定或被悬浮的省份，则高亮（完美解决包含多个岛屿的省份联动）
+                const isHighlighted = 
+                    polygon._provinceName === this.lockedProvinceName || 
+                    polygon._provinceName === this.hoveredProvinceName;
+                
+                polygon.setOptions(isHighlighted ? highlightOpts : defaultOpts);
+            });
+        }
+
+        // [优化] 使用高德原生 AMap.GeoJSON 彻底解决 MultiPolygon 渲染，并收集多边形实例
+        drawProvinces(geojsonData) {
+            this.clearProvinces(); // 先清理历史图层
+
+            AMap.plugin('AMap.GeoJSON', () => {
+                this.provinceGeoJSONLayer = new AMap.GeoJSON({
+                    geoJSON: geojsonData,
+                    getPolygon: (geojson, lnglats) => {
+                        const provinceName = geojson.properties?.name;
+                        const polygon = new AMap.Polygon({
+                            path: lnglats,
+                            strokeColor: CONFIG.PROVINCE_MASK.strokeColor,
+                            strokeOpacity: CONFIG.PROVINCE_MASK.strokeOpacity,
+                            strokeWeight: CONFIG.PROVINCE_MASK.strokeWeight,
+                            fillColor: CONFIG.PROVINCE_MASK.fillColor,
+                            fillOpacity: CONFIG.PROVINCE_MASK.fillOpacity,
+                            cursor: 'pointer'
+                        });
+
+                        polygon._provinceName = provinceName; // 绑定省份名称
+                        this.provincePolygons.push(polygon);  // 存入数组供空间查询使用
+
+                        // 多边形悬浮
+                        polygon.on('mouseover', () => {
+                            this.hoveredProvinceName = provinceName;
+                            this.refreshProvinceStyles();
+                        });
+
+                        // 多边形移出
+                        polygon.on('mouseout', () => {
+                            if (this.hoveredProvinceName === provinceName) {
+                                this.hoveredProvinceName = null;
+                                this.refreshProvinceStyles();
+                            }
+                        });
+
+                        // 多边形点击 (锁定/解锁)
+                        polygon.on('click', (e) => {
+                            e.preventDefault();
+                            if (this.lockedProvinceName === provinceName) {
+                                this.lockedProvinceName = null; // 再次点击取消锁定
+                            } else {
+                                this.lockedProvinceName = provinceName; // 锁定当前省份
+                            }
+                            this.refreshProvinceStyles();
+                        });
+
+                        return polygon;
+                    }
+                });
+
+                if (this.provinceMaskEnabled) {
+                    this.map.add(this.provinceGeoJSONLayer);
+                }
+            });
+        }
+
+        // [优化] 清理图层时同步重置所有状态
+        clearProvinces() {
+            if (this.provinceGeoJSONLayer) {
+                this.map.remove(this.provinceGeoJSONLayer);
+                this.provinceGeoJSONLayer = null;
+            }
+            this.provincePolygons = [];
+            this.hoveredProvinceName = null;
+            this.lockedProvinceName = null;
+        }
+
+        // [优化] 切换开关时同步刷新样式
+        setProvinceMaskEnabled(enabled) {
+            this.provinceMaskEnabled = enabled;
+            if (this.provinceGeoJSONLayer) {
+                if (enabled) {
+                    this.map.add(this.provinceGeoJSONLayer);
+                    this.refreshProvinceStyles();
+                } else {
+                    this.map.remove(this.provinceGeoJSONLayer);
+                }
+            }
+        }
+
+        // [优化] 切换省份遮罩显示/隐藏 (不再反复销毁和重绘图层，直接控制显示隐藏)
+        setProvinceMaskEnabled(enabled) {
+            this.provinceMaskEnabled = enabled;
+            if (this.provinceGeoJSONLayer) {
+                if (enabled) {
+                    this.map.add(this.provinceGeoJSONLayer);
+                } else {
+                    this.map.remove(this.provinceGeoJSONLayer);
+                }
+            }
         }
     }
 
@@ -546,6 +749,28 @@
 
         togWrap.append(label, btn);
         container.appendChild(togWrap);
+
+        // [新增] 省份高亮开关
+        const provTogWrap = document.createElement('div');
+        provTogWrap.className = 'footprint-map__province-toggle';
+
+        const provLabel = document.createElement('span');
+        provLabel.className = 'toggle-label';
+        provLabel.textContent = '省份高亮';
+
+        const provBtn = document.createElement('button');
+        provBtn.className = 'toggle-switch';
+        provBtn.innerHTML = '<span class="toggle-knob"></span>';
+
+        let provEnabled = true;
+        provBtn.onclick = () => {
+            provEnabled = !provEnabled;
+            provBtn.classList.toggle('is-off', !provEnabled);
+            controls.setProvinceMaskEnabled(provEnabled);
+        };
+
+        provTogWrap.append(provLabel, provBtn);
+        container.appendChild(provTogWrap);
     }
 
     document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.footprint-map').forEach(initMap));

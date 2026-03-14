@@ -43,3 +43,6 @@ Desktop.ini
 # Build artifacts
 dist/
 build/
+PROVINCE_MASK_GUIDE.md
+.gitignore
+QUICK_REFERENCE.md

@@ -197,6 +197,63 @@
     left: 2px;
 }
 
+/* [新增] Province Mask Toggle */
+.footprint-map__province-toggle {
+    position: absolute;
+    bottom: 65px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-size: 13px;
+    user-select: none;
+    transition: all 0.3s;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+}
+
+.footprint-map__province-toggle .toggle-label {
+    font-weight: 500;
+}
+
+.footprint-map__province-toggle .toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.3s;
+    outline: none;
+    background: #3388ff;
+    padding: 0;
+}
+
+.footprint-map__province-toggle .toggle-switch .toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 22px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: left 0.3s;
+}
+
+.footprint-map__province-toggle .toggle-switch.is-off {
+    background: #ccc;
+}
+
+.footprint-map__province-toggle .toggle-switch.is-off .toggle-knob {
+    left: 2px;
+}
+
 /* ==========================================================================
    5. UI Components: Map Controls
    ========================================================================== */
@@ -547,6 +604,8 @@
 .dark .footprint-map__filter-btn.is-active { background: #f7f7f7; color: #111; }
 .dark .footprint-map__cluster-toggle { background: rgba(40, 40, 40, 0.95); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); color: #e0e0e0; }
 .dark .footprint-map__cluster-toggle .toggle-switch.is-off { background: #555; }
+.dark .footprint-map__province-toggle { background: rgba(40, 40, 40, 0.95); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); color: #e0e0e0; }
+.dark .footprint-map__province-toggle .toggle-switch.is-off { background: #555; }
 .dark .footprint-ctrl-btn { background: #282828; color: #ccc; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
 .dark .footprint-ctrl-btn:hover { background: #333; color: #fff; }
 .dark .footprint-marker { border-color: rgba(0, 0, 0, 0.35); }
