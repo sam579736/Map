@@ -33,7 +33,7 @@
         // [新增] 高亮插件系统核心配置
         HIGHLIGHT: {
             // 模式选择：'none' (不开启), 'hover' (悬浮联动高亮), 'visited' (永久点亮去过的地方)
-            mode: 'none', 
+            mode: 'hover', 
             
             // 数据源：支持同时加载中国省份和世界国家边界
             geojsonUrls: [

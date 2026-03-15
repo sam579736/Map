@@ -289,5 +289,48 @@
       "categories": ["2024", "城市", "旅行"],
       "markerColor": "sunset"
     }
+    ,
+    {
+      "name": "伦敦 London",
+      "coordinates": "-0.1276,51.5072",
+      "date": "2023",
+      "categories": ["去过", "国外"],
+      "markerColor": "violet"
+    },
+    {
+      "name": "纽约 New York",
+      "coordinates": "-74.0060,40.7128",
+      "date": "2022",
+      "categories": ["去过", "国外"],
+      "markerColor": "ocean"
+    },
+    {
+      "name": "新加坡 Singapore",
+      "coordinates": "103.8198,1.3521",
+      "date": "2024",
+      "categories": ["去过", "国外"],
+      "markerColor": "forest"
+    },
+    {
+      "name": "堪培拉 Canberra",
+      "coordinates": "149.1300,-35.2809",
+      "date": "2019",
+      "categories": ["去过", "国外"],
+      "markerColor": "sunset"
+    },
+    {
+      "name": "西宁 Xining",
+      "coordinates": "101.7782,36.6171",
+      "date": "2026-10",
+      "categories": ["计划"],
+      "markerColor": "amber"
+    },
+    {
+      "name": "呼和浩特 Hohhot",
+      "coordinates": "111.7490,40.8426",
+      "date": "2026-12",
+      "categories": ["计划"],
+      "markerColor": "amber"
+    }
   ]
 }
