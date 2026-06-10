@@ -335,6 +335,10 @@
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <h2 style="margin:0; display:flex; align-items:center; gap:8px;">🔍 效果预览
           <button type="button" class="secondary" id="refreshPreviewBtn" style="font-size:13px; padding:7px 14px;">🔄 刷新预览</button>
+          <button type="button" id="openPreviewBtn" 
+        style="background:#10b981; border-color:#10b981; color:white; font-weight:600;">
+  🔗 新页面预览
+</button>
         </h2>
         <div style="display:flex; gap:8px; align-items:center;">
           <button type="button" class="secondary" id="toggleThemeBtn" style="font-size:13px; padding:7px 14px;">🌓 主题</button>
@@ -1116,6 +1120,30 @@
     document.head.appendChild(styleEl);
     // 初始化分类与颜色控件
     initMarkerColorPalette(); renderCategoryOptions();
+    // ====================== 新页面独立预览 ======================
+function openPreviewPage() {
+  generateJson();   // 生成最新 JSON
+
+  const jsonText = jsonOutput.textContent.trim();
+
+  if (!jsonText || jsonText.length < 30) {
+    alert('请先添加至少一个地点后再打开预览！');
+    return;
+  }
+
+  try {
+    // 使用 Base64 安全传递数据
+    const base64 = btoa(unescape(encodeURIComponent(jsonText)));
+    window.open(`index.html?data=${base64}`, '_blank');
+  } catch (e) {
+    alert('打开预览失败：' + e.message);
+  }
+}
+    // 绑定「新页面预览」按钮
+const openPreviewBtn = document.getElementById('openPreviewBtn');
+if (openPreviewBtn) {
+  openPreviewBtn.addEventListener('click', openPreviewPage);
+}
   </script>
 </body>
 </html>
