@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>足迹地图 - Demo</title>
+  <meta name="description" content="基于高德地图的纯前端足迹地图">
+  
+  <link rel="stylesheet" href="static/css/footprintmap.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+  <script defer src="https://tongji.xiaoten.com/script.js" data-website-id="310ac8bc-25e0-4f76-95fb-31797490c73a"></script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; background: #f9fafb; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    .header h1 { font-size: 2.5em; margin-bottom: 10px; font-weight: 700; }
+    .header p { font-size: 1.2em; opacity: 0.9; }
+    .header .links { margin-top: 20px; }
+    .header .links a { display: inline-block; margin: 0 10px; padding: 10px 20px; background: rgba(255, 255, 255, 0.2); color: white; text-decoration: none; border-radius: 6px; transition: all 0.3s; border: 1px solid rgba(255, 255, 255, 0.3); }
+    .header .links a:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-2px); }
+    .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+    .section { background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+    .section h2 { font-size: 1.8em; margin-bottom: 20px; color: #1f2937; border-left: 4px solid #667eea; padding-left: 15px; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+    .feature-card { padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
+    .feature-card h3 { font-size: 1.2em; margin-bottom: 10px; color: #667eea; }
+    .feature-card p { color: #6b7280; font-size: 0.95em; }
+    #footprintMap { width: 100%; height: 700px; }
+    
+    .demo-toolbar { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 1000; }
+    .demo-toolbar button, .demo-toolbar a.tip { appearance: none; border: 1px solid rgba(0,0,0,0.1); background: #fff; color: #111827; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); text-decoration: none; }
+    .demo-toolbar button:hover, .demo-toolbar a.tip:hover { transform: translateY(-1px); }
+    .dark .demo-toolbar button, .dark .demo-toolbar a.tip { background: #111827; color: #e5e7eb; border-color: rgba(255,255,255,0.12); }
+    .demo-toolbar a.tip, .dark .demo-toolbar a.tip { background: #fff; color: #111827; border-color: rgba(0,0,0,0.1); }
+    .api-tip { position: fixed; top: 60px; right: 16px; max-width: 320px; background: #fff; color: #374151; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 999; display: none; }
+    .api-tip p { font-size: 13px; line-height: 1.6; }
+    .api-tip code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; }
+    .api-tip a { color: #2563eb; text-decoration: none; }
+    .api-tip a:hover { text-decoration: underline; }
+    
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+    .stat-card { text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); }
+    .stat-card .number { font-size: 3em; font-weight: 700; margin-bottom: 10px; }
+    .stat-card .label { font-size: 1.1em; opacity: 0.9; }
+    .code-block { background: #f3f4f6; color: #0f172a; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: "Monaco", "Courier New", monospace; font-size: 0.9em; line-height: 1.6; border: 1px solid #e5e7eb; }
+    .footer { text-align: center; padding: 40px 20px; color: #6b7280; background: white; margin-top: 40px; border-top: 1px solid #e5e7eb; }
+    .footer a { color: #667eea; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* 演示页内嵌控制台样式 */
+    .demo-panel { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+    .demo-panel-item { display: flex; align-items: center; gap: 10px; }
+    .demo-panel label { font-weight: 600; font-size: 14px; color: #334155; }
+    .demo-select { padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; background: #fff; font-size: 13px; cursor: pointer; color: #1f2937; }
+    .demo-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid transparent; font-size: 13px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+    .demo-btn.is-active { background: #6366f1; border-color: #6366f1; color: #fff; }
+    .demo-btn.is-off { background: #fff; border-color: #cbd5e1; color: #475569; border: 1px solid #cbd5e1; }
+
+    @media (max-width: 768px) {
+      .header { padding: 30px 16px; }
+      .header h1 { font-size: 1.8em; }
+      .header p { font-size: 1em; }
+      .header .links { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+      .header .links a { margin: 0; width: 100%; max-width: 280px; text-align: center; }
+      .container { padding: 20px 12px; }
+      .section { padding: 20px 16px; margin-bottom: 20px; }
+      .section h2 { font-size: 1.4em; }
+      .features { gap: 12px; }
+      .feature-card { padding: 16px; }
+      #footprintMap { height: 500px; }
+      .stat-card { padding: 20px 16px; }
+      .stat-card .number { font-size: 2em; }
+      .code-block { padding: 16px; font-size: 0.85em; }
+      .demo-toolbar { flex-direction: column; width: auto; right: 12px; bottom: 12px; gap: 6px; top: auto; }
+      .demo-toolbar button, .demo-toolbar a.tip { padding: 10px 14px; font-size: 13px; width: auto; min-width: 100px; }
+      .demo-panel { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .demo-tip-text { margin-left: 0 !important; max-width: 100% !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-toolbar">
+    <a href="#" class="tip" id="apiTipBtn" title="查看 API Key 填写提示">🔑 API Key</a>
+    <a href="editor.html" class="tip" title="数据构建器">✏️ 编辑器</a>
+  </div>
+  <div class="api-tip" id="apiTipBox">
+    <p>本演示页已内置示例 API Key，可直接查看效果；你也可以点击右上角按钮填入自己的 Key 覆盖演示（会保存在本地浏览器）。</p>
+    <p>申请地址：<a href="https://console.amap.com/dev/key/app" target="_blank" rel="noreferrer">高德开放平台</a></p>
+  </div>
+  
+  <div class="header">
+    <h1>🗺️ 足迹地图</h1>
+    <p>基于高德地图的纯前端足迹地图</p>
+    <div class="links">
+      <a href="https://github.com/Jiosanity/XiaoTen-FootprintMap" target="_blank">📦 GitHub</a>
+      <a href="https://github.com/Jiosanity/XiaoTen-FootprintMap/blob/main/docs/installation.md" target="_blank" rel="noreferrer">📖 文档</a>
+      <a href="editor.html">✏️ 数据编辑器</a>
+    </div>
+  </div>
+    <div class="section">
+      <h2 style="display:inline-flex; align-items:center; gap:8px;">🗺️ 在线演示
+        <button id="toggleThemeBtn" title="切换演示地图主题" style="appearance:none; border:1px solid rgba(0,0,0,0.1); background:#fff; color:#111827; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:13px; box-shadow:0 2px 6px rgba(0,0,0,0.08);">🌓 地图主题</button>
+      </h2>
+      <p style="color: #6b7280; margin-bottom: 15px;">体验不同的人群高亮需求：通过下方控制面板热切换模式。组件原生支持解析复杂的群岛国家（如英美澳），完美展示全球足迹。</p>
+      
+      <div class="demo-panel">
+        <div class="demo-panel-item">
+          <label>🗺️ 区域高亮模式：</label>
+          <select id="demoHighlightMode" class="demo-select">
+            <option value="none" selected>❌ 关闭高亮功能</option>
+            <option value="visited">🌍 标记区域永久点亮</option>
+            <option value="hover">🖱️ 鼠标悬浮交互高亮</option>
+          </select>
+        </div>
+        <div class="demo-panel-item" id="demoToggleWrapper" style="display:none;">
+          <label>⚙️ 内建开关：</label>
+          <button id="demoHighlightToggle" class="demo-btn is-active">显示地图内建开关</button>
+        </div>
+        
+        <div class="demo-panel-item demo-tip-text" style="font-size: 13px; color: #64748b; margin-left: auto; max-width: 480px; line-height: 1.5;">
+          💡 <b>提示</b>：当启用「永久点亮」时，已自动排除含有“计划”标签的地点（可通过代码自定义排除任何标签，如演示中的西宁、呼和浩特）。
+        </div>
+      </div>
+
+      <div id="footprintMap" class="footprint-map" data-json="static/data/footprints.example.json" data-amap-key="01c4ee7aa40ab2e55c191e6eee56f3d6" style="border-radius:6px; overflow:hidden;"></div>
+    </div>
+
+  <script src="static/js/utils.js"></script>
+  <script src="static/js/theme.js"></script>
+  <script src="static/js/footprintmap.js?v=20260315"></script>
+  <script src="static/js/plugin-visited.js"></script>
+  <script src="static/js/plugin-hover.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', ()=>{ if(window.hljs && typeof hljs.highlightAll==='function') hljs.highlightAll(); });</script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedKey = localStorage.getItem('amapKey') || '';
+      if (savedKey) {
+        const el = document.getElementById('footprintMap');
+        if (el) el.setAttribute('data-amap-key', savedKey);
+      }
+
+      Theme.init({ btnId: 'toggleThemeBtn', previewSelector: '#footprintMap' });
+
+      const modeSelect = document.getElementById('demoHighlightMode');
+      const toggleWrapper = document.getElementById('demoToggleWrapper');
+      const toggleBtn = document.getElementById('demoHighlightToggle');
+      
+      let isInternalSwitchVisible = true;
+
+      modeSelect.addEventListener('change', (e) => {
+        const selectedMode = e.target.value;
+        if(window.FootprintMap && window.FootprintMap.CONFIG) {
+            window.FootprintMap.CONFIG.HIGHLIGHT.mode = selectedMode;
+        }
+        
+        if (selectedMode === 'none') {
+          toggleWrapper.style.display = 'none';
+        } else {
+          toggleWrapper.style.display = 'flex';
+        }
+
+        const mapContainer = document.getElementById('footprintMap');
+        if(mapContainer && window.FootprintMap.bootstrapMap) {
+            mapContainer.innerHTML = '';
+            mapContainer.classList.add('footprint-map--loading');
+            
+            window.FootprintMap.bootstrapMap(mapContainer).then(() => {
+                const internalSwitch = document.querySelector('.footprint-map__province-toggle');
+                if (internalSwitch && selectedMode !== 'none') {
+                    internalSwitch.style.display = isInternalSwitchVisible ? 'flex' : 'none';
+                }
+            });
+        }
+      });
+
+      toggleBtn.addEventListener('click', () => {
+        isInternalSwitchVisible = !isInternalSwitchVisible;
+        
+        if (isInternalSwitchVisible) {
+          toggleBtn.className = 'demo-btn is-active';
+          toggleBtn.textContent = '显示地图内建开关';
+        } else {
+          toggleBtn.className = 'demo-btn is-off';
+          toggleBtn.textContent = '隐藏地图内建开关';
+        }
+
+        const internalSwitch = document.querySelector('.footprint-map__province-toggle');
+        if (internalSwitch) {
+          internalSwitch.style.display = isInternalSwitchVisible ? 'flex' : 'none';
+        }
+      });
+
+      const apiTipBtn = document.getElementById('apiTipBtn');
+      if(apiTipBtn) {
+          apiTipBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const current = localStorage.getItem('amapKey') || '';
+            const input = prompt('请输入你的高德地图 Web JS API Key：', current);
+            if (input !== null) {
+              const value = input.trim();
+              if (value) {
+                localStorage.setItem('amapKey', value);
+                location.reload();
+              } else {
+                localStorage.removeItem('amapKey');
+                location.reload();
+              }
+            }
+          });
+      }
+    });
+  </script>
+</body>
+</html>
