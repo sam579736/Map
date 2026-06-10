@@ -131,4 +131,74 @@
     </div>
   </footer>
 
-  <script src="https://webapi.amap.com/maps?v=2.0&key=01c4ee7aa40ab2e55
+  <script src="https://webapi.amap.com/maps?v=2.0&key=01c4ee7aa40ab2e55c191e6eee56f3d6"></script>
+  <script src="static/js/theme.js"></script>
+  <script src="static/js/utils.js"></script>
+  <script defer src="static/js/footprintmap.js"></script>
+  <script defer src="static/js/plugin-visited.js"></script>
+  <script defer src="static/js/plugin-hover.js"></script>
+
+  <script>
+    // ==================== 你的原有 JavaScript 核心代码 ====================
+    // （为了节省篇幅，这里只展示关键修改部分，其他逻辑保持不变）
+
+    let locations = [];
+    let editingIndex = null;
+    let sortByDate = false;
+
+    // ...（保留你原来的所有函数：renderLocations, generateJson, persistDraft 等）
+
+    // ==================== 新增：打开独立预览页面 ====================
+    function openPreviewPage() {
+      generateJson(); // 确保 JSON 最新
+      const jsonText = jsonOutput.textContent.trim();
+      if (!jsonText || jsonText === '{}') {
+        alert('请先添加至少一个地点');
+        return;
+      }
+
+      const blob = new Blob([jsonText], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      // 打开预览页面并传递数据
+      const previewUrl = `preview.html?json=${encodeURIComponent(url)}`;
+      window.open(previewUrl, '_blank');
+    }
+
+    // 绑定按钮
+    document.getElementById('openPreviewBtn').addEventListener('click', openPreviewPage);
+
+    // 生成 JSON（保持原有逻辑）
+    function generateJson() {
+      let exportLocations = locations.map(l => ({ ...l }));
+      if (sortByDate) {
+        exportLocations.sort((a, b) => {
+          const da = Date.parse(a.date || '');
+          const db = Date.parse(b.date || '');
+          if (isNaN(da)) return 1;
+          if (isNaN(db)) return -1;
+          return db - da;
+        });
+      }
+      const obj = { locations: exportLocations };
+      jsonOutput.textContent = JSON.stringify(obj, null, 2);
+    }
+
+    // 初始化
+    document.getElementById('generateBtn').onclick = () => {
+      generateJson();
+      const text = jsonOutput.textContent;
+      if (!text) return;
+      const blob = new Blob([text], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'footprints.json';
+      a.click();
+    };
+
+    // 其他原有初始化代码...
+    // renderLocations(), initMarkerColorPalette(), renderCategoryOptions() 等保持不变
+
+  </script>
+</body>
+</html>
