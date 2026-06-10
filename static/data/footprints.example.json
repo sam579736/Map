@@ -1,20 +1,15 @@
 {
   "locations": [
     {
-      "name": "哈尔滨",
-      "coordinates": "126.6424,45.7560",
-      "description": "冰雪文化著称的北方城市，冬季风光独特。",
-      "date": "2024-12-28",
-      "photos": [
-        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg",
-        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg"
-      ],
+      "name": "美好家园13-2-304",
+      "coordinates": "126.046333,41.785012",
+      "description": "出租屋",
+      "date": "2026-06-10",
       "categories": [
-        "2024",
-        "自然",
-        "冬季"
+        "跑步",
+        "常驻"
       ],
-      "markerColor": "amber"
+      "markerColor": "sunset"
     }
   ]
 }
