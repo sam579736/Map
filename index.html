@@ -6,45 +6,27 @@
   <title>我的足迹地图</title>
   <link rel="stylesheet" href="static/css/footprintmap.css" />
   <style>
-    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:#f8fafc; }
-    header {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      padding: 14px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .map-container { height: calc(100vh - 62px); position: relative; }
-    #mainMap { width: 100%; height: 100%; }
-    .empty {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      color: #64748b;
-    }
+    body,html{margin:0;padding:0;height:100%;background:#f8fafc;font-family:system-ui,sans-serif;}
+    header{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+    .map-container{height:calc(100vh - 65px);position:relative;}
+    #mainMap{width:100%;height:100%;}
+    .empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#64748b;z-index:5;}
   </style>
 </head>
 <body>
   <header>
     <div>
-      <h1 style="margin:0; font-size:23px;">我的足迹地图</h1>
-      <p style="margin:0; opacity:0.9; font-size:14px;">XiaoTen FootprintMap</p>
+      <h1 style="margin:0;font-size:23px;">我的足迹地图</h1>
+      <p style="margin:0;opacity:0.9;font-size:14px;">XiaoTen FootprintMap</p>
     </div>
-    <button id="loadBtn" style="padding:8px 18px; border-radius:6px; background:rgba(255,255,255,0.25); border:none; color:white; cursor:pointer;">
-      📤 加载 JSON
-    </button>
+    <button id="loadBtn">📤 加载 JSON</button>
   </header>
 
   <div class="map-container">
     <div id="mainMap" class="footprint-map" data-amap-key="01c4ee7aa40ab2e55c191e6eee56f3d6"></div>
-    
     <div id="emptyTip" class="empty">
       <h3>暂无数据</h3>
-      <p>请从 <a href="editor.html" style="color:#6366f1;">构建器</a> 点击「新页面预览」</p>
+      <p>请从构建器点击「新页面预览」</p>
     </div>
   </div>
 
@@ -57,50 +39,53 @@
     const mapEl = document.getElementById('mainMap');
     const emptyTip = document.getElementById('emptyTip');
 
-    // 接收从构建器传来的数据
-    function loadFromBuilder() {
+    function loadMapData(jsonText) {
+      if (!jsonText) return;
+      try {
+        const blob = new Blob([jsonText], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        
+        mapEl.setAttribute('data-json', url);
+        emptyTip.style.display = 'none';
+
+        // 关键：延迟调用 bootstrapMap
+        setTimeout(() => {
+          if (window.FootprintMap && typeof window.FootprintMap.bootstrapMap === 'function') {
+            window.FootprintMap.bootstrapMap(mapEl);
+          } else {
+            console.warn("FootprintMap 未加载");
+          }
+        }, 300);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 从 URL 参数加载
+    window.onload = () => {
       const params = new URLSearchParams(location.search);
       const base64 = params.get('data');
       
       if (base64) {
         try {
           const jsonText = decodeURIComponent(escape(atob(base64)));
-          const blob = new Blob([jsonText], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          
-          mapEl.setAttribute('data-json', url);
-          emptyTip.style.display = 'none';
-
-          if (window.FootprintMap && window.FootprintMap.bootstrapMap) {
-            setTimeout(() => {
-              window.FootprintMap.bootstrapMap(mapEl);
-            }, 150);
-          }
+          loadMapData(jsonText);
         } catch (err) {
           console.error(err);
+          alert('数据解析失败，请重试');
         }
       }
-    }
+    };
 
-    // 手动上传
+    // 手动加载
     document.getElementById('loadBtn').onclick = () => document.getElementById('fileInput').click();
     document.getElementById('fileInput').onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
-        const blob = new Blob([reader.result], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        mapEl.setAttribute('data-json', url);
-        emptyTip.style.display = 'none';
-        if (window.FootprintMap && window.FootprintMap.bootstrapMap) {
-          window.FootprintMap.bootstrapMap(mapEl);
-        }
-      };
+      reader.onload = () => loadMapData(reader.result);
       reader.readAsText(file);
     };
-
-    window.onload = loadFromBuilder;
   </script>
 </body>
 </html>
