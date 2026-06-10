@@ -273,9 +273,9 @@
           <div class="small">点击标签切换选中，自定义分类可添加后再点亮。</div>
         </div>
         <div class="group">
-          <label>图片 URL（输入后回车或点击添加）</label>
+          <label>图片 URL（输入后回车或点击添加）https://samweb.ccwu.cc/photo/</label>
           <div style="display:flex; gap:8px;">
-            <input type="text" id="photoInput" placeholder="https://samweb.ccwu.cc/.jpg" style="flex:1;" />
+            <input type="text" id="photoInput" placeholder="" style="flex:1;" />
             <button type="button" class="secondary" id="addPhotoBtn" style="white-space:nowrap;">添加图片</button>
           </div>
           <div class="photos-list" id="photosList"></div>
@@ -633,7 +633,7 @@
       document.getElementById('submitBtn').textContent = '✚ 添加地点';
       document.getElementById('cancelEditBtn').style.display = 'none';
     };
-    document.getElementById('clearAllBtn').onclick=()=>{ if(confirm('确定清空所有地点?')){ locations=[]; renderLocations(); persistDraft(); jsonOutput.textContent=''; const wrap = document.getElementById('previewMapWrap'); const previewMapEl = document.getElementById('previewMap'); if(previewMapEl) previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点、导入 JSON 文件或导入示例数据，然后点击"刷新预览"。</div>'; } };
+    document.getElementById('clearAllBtn').onclick=()=>{ if(confirm('确定清空所有地点?')){ locations=[]; renderLocations(); persistDraft(); jsonOutput.textContent=''; const wrap = document.getElementById('previewMapWrap'); const previewMapEl = document.getElementById('previewMap'); if(previewMapEl) previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点、导入 JSON 文件或导入远程数据，然后点击"刷新预览"。</div>'; } };
 
     
     document.getElementById('removeLastBtn').onclick=()=>{
@@ -879,7 +879,7 @@
     };
     document.getElementById('toggleSortDateBtn').onclick=()=>{ sortByDate = !sortByDate; document.getElementById('toggleSortDateBtn').textContent = sortByDate ? '关闭按日期排序' : '开启按日期排序'; generateJson(); };
 
-    // 在导出控件区域（按日期排序按钮后）插入“导入示例数据”按钮，颜色改为绿色以区别于蓝/白/红
+    // 在导出控件区域（按日期排序按钮后）插入“导入远程数据”按钮，颜色改为绿色以区别于蓝/白/红
     (function insertImportSampleAfterSort(){
       try{
         const sortBtn = document.getElementById('toggleSortDateBtn');
@@ -894,25 +894,25 @@
         importSampleBtn2.style.background = '#10b981';
         importSampleBtn2.style.borderColor = '#10b981';
         importSampleBtn2.style.color = '#fff';
-        importSampleBtn2.textContent = '导入存储数据';
-        importSampleBtn2.title = '从 static/data/footprints.example.json 加载示例数据（将替换当前数据）';
+        importSampleBtn2.textContent = '导入远程数据';
+        importSampleBtn2.title = '从 static/data/footprints.example.json 加载远程数据（将替换当前数据）';
         importSampleBtn2.onclick = async ()=>{
-          if(!confirm('将用示例数据替换当前已添加的地点，确定要继续吗？')) return;
+          if(!confirm('将用远程数据替换当前已添加的地点，确定要继续吗？')) return;
           try{
             const res = await fetch('./static/data/footprints.example.json');
-            if(!res.ok) throw new Error('无法加载示例数据');
+            if(!res.ok) throw new Error('无法加载远程数据');
             const data = await res.json();
-            if(!data || !Array.isArray(data.locations)) throw new Error('示例数据格式不正确');
+            if(!data || !Array.isArray(data.locations)) throw new Error('远程数据格式不正确');
             locations = data.locations.filter(l=> l && l.name && l.coordinates).map(l=> ({ ...l, date: formatDateISO(l.date) || l.date }));
             renderLocations(); renderPhotosTemp(); persistDraft(); generateJson(); renderPreviewMap();
-            alert('示例数据已加载');
-          }catch(err){ alert('加载示例数据失败：' + (err && err.message ? err.message : err)); }
+            alert('远程数据已加载');
+          }catch(err){ alert('加载远程数据失败：' + (err && err.message ? err.message : err)); }
         };
         // 插入到 sortBtn 之后
         if(sortBtn.parentNode){
           sortBtn.parentNode.insertBefore(importSampleBtn2, sortBtn.nextSibling);
         }
-      }catch(e){ console.warn('插入导入示例数据按钮失败', e); }
+      }catch(e){ console.warn('插入导入远程数据按钮失败', e); }
     })();
     document.getElementById('refreshPreviewBtn').onclick=()=>{ renderPreviewMap(); };
     // 主题切换由 shared script 管理，按钮文本与 demo 保持一致
@@ -969,19 +969,19 @@
       lsSet('footprintmap_builder_importAutoSort', importAutoSort.toString());
     });
 
-    // 初始渲染（不再自动加载示例数据，初始状态保持为空）
+    // 初始渲染（不再自动加载远程数据，初始状态保持为空）
     (function initialRender(){
       if(locations && locations.length>0){
         renderLocations(); renderPhotosTemp();
         return;
       }
-      // 不自动加载示例：直接渲染空状态，保持与刷新预览时一致的提示（含导入示例数据提示）
+      // 不自动加载示例：直接渲染空状态，保持与刷新预览时一致的提示（含导入远程数据提示）
       renderLocations(); renderPhotosTemp();
       try{
         const wrap = document.getElementById('previewMapWrap');
         const previewMapEl = document.getElementById('previewMap');
         if(wrap && previewMapEl && !wrap._initialized){
-          previewMapEl.innerHTML = '<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点、导入 JSON 文件或导入示例数据，然后点击"刷新预览"。</div>';
+          previewMapEl.innerHTML = '<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点、导入 JSON 文件或导入远程数据，然后点击"刷新预览"。</div>';
           wrap._initialized = true;
         }
       }catch(e){/* ignore */}
@@ -1046,7 +1046,7 @@
       if(!locations.length){ 
         // 只在初始化时显示提示，不清空已有内容
         if(!wrap._initialized) {
-          previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点、导入 JSON 文件或导入示例数据，然后点击"刷新预览"。</div>'; 
+          previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点、导入 JSON 文件或导入远程数据，然后点击"刷新预览"。</div>'; 
           wrap._initialized = true;
         }
         return; 
