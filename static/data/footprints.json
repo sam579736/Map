@@ -15,16 +15,6 @@
         "冬季"
       ],
       "markerColor": "amber"
-    },
-    {
-      "name": "伦敦 London",
-      "coordinates": "-0.1276,51.5072",
-      "date": "2023-01-01",
-      "categories": [
-        "去过",
-        "国外"
-      ],
-      "markerColor": "violet"
     }
   ]
 }
