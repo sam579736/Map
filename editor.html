@@ -264,7 +264,7 @@
           <input type="hidden" id="markerColor" value="" />
         </div>
         <div class="group">
-          <label>分类（多选，默认：常驻 / 旅行 / 游记）</label>
+          <label>分类（多选，默认：常驻 / 旅行 / 游记 / 摩旅 / 自驾 / 露营 / 工作 / 运动 / 探索）</label>
           <div id="categoryOptions" class="tags-options" aria-label="分类多选"></div>
           <div style="display:flex; gap:8px; margin-top:6px;">
             <input type="text" id="newCategoryInput" placeholder="输入后回车或点击添加" style="flex:1;" />
@@ -275,7 +275,7 @@
         <div class="group">
           <label>图片 URL（输入后回车或点击添加）</label>
           <div style="display:flex; gap:8px;">
-            <input type="text" id="photoInput" placeholder="https://...jpg" style="flex:1;" />
+            <input type="text" id="photoInput" placeholder="https://samweb.ccwu.cc/.jpg" style="flex:1;" />
             <button type="button" class="secondary" id="addPhotoBtn" style="white-space:nowrap;">添加图片</button>
           </div>
           <div class="photos-list" id="photosList"></div>
@@ -895,7 +895,7 @@
         importSampleBtn2.style.background = '#10b981';
         importSampleBtn2.style.borderColor = '#10b981';
         importSampleBtn2.style.color = '#fff';
-        importSampleBtn2.textContent = '导入示例数据';
+        importSampleBtn2.textContent = '导入存储数据';
         importSampleBtn2.title = '从 static/data/footprints.example.json 加载示例数据（将替换当前数据）';
         importSampleBtn2.onclick = async ()=>{
           if(!confirm('将用示例数据替换当前已添加的地点，确定要继续吗？')) return;
