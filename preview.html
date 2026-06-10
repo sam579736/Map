@@ -1,157 +1,58 @@
+<!-- preview.html -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>足迹地图预览 - XiaoTen FootprintMap</title>
-  <link rel="stylesheet" href="static/css/footprintmap.css" />
-  <link rel="icon" href="data:;base64,=">
   <style>
-    body { margin:0; padding:0; background:#f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    header {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .map-container {
-      height: calc(100vh - 68px);
-      position: relative;
-    }
-    #previewMap {
-      width: 100%;
-      height: 100%;
-    }
-    .controls {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      z-index: 100;
-      display: flex;
-      gap: 10px;
-      background: rgba(255,255,255,0.95);
-      padding: 8px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .info {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      background: rgba(255,255,255,0.9);
-      padding: 10px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      color: #334155;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      z-index: 100;
-    }
+    body { margin:0; padding:0; font-family: system-ui, sans-serif; }
+    header { background: linear-gradient(135deg,#6366f1,#8b5cf6); color:white; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
+    .map-container { height: calc(100vh - 60px); position:relative; }
+    #previewMap { width:100%; height:100%; }
   </style>
 </head>
 <body>
   <header>
-    <div>
-      <h1 style="margin:0;font-size:20px;">足迹地图预览</h1>
-      <p style="margin:0;opacity:0.85;font-size:14px;">XiaoTen FootprintMap</p>
-    </div>
-    <div style="display:flex; gap:12px; align-items:center;">
-      <button id="loadJsonBtn" class="secondary">加载 JSON</button>
-      <button id="toggleThemeBtn">🌓 主题</button>
-      <a href="index.html" style="color:white; text-decoration:none; font-size:14px;">← 返回构建器</a>
-    </div>
+    <h1>足迹地图预览</h1>
+    <a href="index.html" style="color:white;">← 返回构建器</a>
   </header>
 
   <div class="map-container">
-    <div id="previewMap" class="footprint-map" 
-         style="width:100%;height:100%;" 
-         data-amap-key="01c4ee7aa40ab2e55c191e6eee56f3d6">
-    </div>
-
-    <div class="controls">
-      <input type="file" id="jsonFileInput" accept=".json" style="display:none;" />
-      <button id="uploadBtn">📤 上传 JSON</button>
-    </div>
-
-    <div class="info" id="infoPanel">
-      暂无数据 • 请上传 JSON 文件
-    </div>
+    <div id="previewMap" class="footprint-map" style="width:100%;height:100%;" data-amap-key="01c4ee7aa40ab2e55c191e6eee56f3d6"></div>
   </div>
 
   <script src="https://webapi.amap.com/maps?v=2.0&key=01c4ee7aa40ab2e55c191e6eee56f3d6"></script>
-  <script src="static/js/theme.js"></script>
-  <script src="static/js/utils.js"></script>
-  <script defer src="static/js/footprintmap.js"></script>
+  <script src="static/js/footprintmap.js"></script>
 
   <script>
-    let currentJsonUrl = null;
-
-    // 支持 URL 参数直接加载（?json=xxx.json）
-    function loadFromUrlParam() {
-      const params = new URLSearchParams(window.location.search);
-      const jsonUrl = params.get('json');
-      if (jsonUrl) {
-        loadJsonData(jsonUrl);
+    function loadData() {
+      const params = new URLSearchParams(location.search);
+      const base64 = params.get('data');
+      
+      if (!base64) {
+        document.getElementById('previewMap').innerHTML = '<div style="padding:40px;text-align:center;color:#666;">没有收到数据</div>';
+        return;
       }
-    }
 
-    function loadJsonData(url) {
-      const mapEl = document.getElementById('previewMap');
-      if (currentJsonUrl) URL.revokeObjectURL(currentJsonUrl);
-      
-      mapEl.setAttribute('data-json', url);
-      currentJsonUrl = url;
-      
-      if (window.FootprintMap && typeof window.FootprintMap.bootstrapMap === 'function') {
-        window.FootprintMap.bootstrapMap(mapEl);
-      }
-      document.getElementById('infoPanel').textContent = '已加载数据 • 可继续上传新 JSON';
-    }
+      try {
+        const jsonText = decodeURIComponent(escape(atob(base64)));
+        const blob = new Blob([jsonText], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
 
-    // 上传 JSON
-    document.getElementById('uploadBtn').onclick = () => {
-      document.getElementById('jsonFileInput').click();
-    };
+        const mapEl = document.getElementById('previewMap');
+        mapEl.setAttribute('data-json', url);
 
-    document.getElementById('jsonFileInput').onchange = e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const blob = new Blob([reader.result], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          loadJsonData(url);
-        } catch (err) {
-          alert('JSON 解析失败：' + err.message);
+        if (window.FootprintMap?.bootstrapMap) {
+          window.FootprintMap.bootstrapMap(mapEl);
         }
-      };
-      reader.readAsText(file);
-    };
-
-    // 初始化
-    window.onload = () => {
-      if (window.Theme) Theme.init({ btnId: 'toggleThemeBtn' });
-      loadFromUrlParam();
-    };
-
-    // 允许拖拽 JSON 文件到窗口
-    document.body.ondragover = e => e.preventDefault();
-    document.body.ondrop = e => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if (file && file.name.endsWith('.json')) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const blob = new Blob([reader.result], { type: 'application/json' });
-          loadJsonData(URL.createObjectURL(blob));
-        };
-        reader.readAsText(file);
+      } catch (e) {
+        console.error(e);
+        alert('数据解析失败');
       }
-    };
+    }
+
+    window.onload = loadData;
   </script>
 </body>
 </html>
