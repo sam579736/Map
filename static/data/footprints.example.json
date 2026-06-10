@@ -5,8 +5,11 @@
       "coordinates": "126.046333,41.785012",
       "description": "出租屋",
       "date": "2026-06-10",
+      "photos": [
+        "https://samweb.ccwu.cc/photo/e627fa7763b44beaebb239f0c3ea1f18.jpg",
+        "https://samweb.ccwu.cc/photo/e99ad5440ee20caf1327ba4da569d408.jpg"
+      ],
       "categories": [
-        "跑步",
         "常驻"
       ],
       "markerColor": "sunset"
