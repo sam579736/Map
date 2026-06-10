@@ -6,96 +6,80 @@
   <title>我的足迹地图</title>
   <link rel="stylesheet" href="map/static/css/footprintmap.css" />
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body, html { height:100%; background:#0f172a; color:white; font-family: system-ui, sans-serif; }
-    header {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
-      z-index: 10;
-    }
-    .map-container { height: calc(100vh - 64px); position: relative; }
-    #mainMap { width:100%; height:100%; }
-    .empty { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; color:#94a3b8; }
+    body,html{margin:0;padding:0;height:100%;background:#f8fafc;font-family:system-ui,sans-serif;}
+    header{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+    .map-container{height:calc(100vh - 65px);position:relative;}
+    #mainMap{width:100%;height:100%;}
+    .empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#64748b;}
   </style>
 </head>
 <body>
   <header>
     <div>
-      <h1 style="font-size:22px;">我的足迹地图</h1>
-      <p style="font-size:14px; opacity:0.9;">XiaoTen FootprintMap</p>
+      <h1 style="margin:0;font-size:22px;">我的足迹地图</h1>
+      <p style="margin:0;opacity:0.9;font-size:14px;">XiaoTen FootprintMap</p>
     </div>
-    <div>
-      <button id="loadBtn" style="padding:8px 16px; background:rgba(255,255,255,0.2); border:none; border-radius:6px; color:white; cursor:pointer;">📤 加载 JSON</button>
-    </div>
+    <button id="loadBtn">📤 加载 JSON</button>
   </header>
 
   <div class="map-container">
     <div id="mainMap" class="footprint-map" data-amap-key="01c4ee7aa40ab2e55c191e6eee56f3d6"></div>
     <div id="emptyTip" class="empty">
-      <p>暂无数据</p>
-      <p style="font-size:14px; margin-top:8px;">请从构建器点击「新页面预览」或上传 JSON 文件</p>
+      <h3>暂无数据</h3>
+      <p>请从构建器点击「新页面预览」</p>
     </div>
   </div>
 
   <input type="file" id="fileInput" accept=".json" style="display:none;">
 
   <script src="https://webapi.amap.com/maps?v=2.0&key=01c4ee7aa40ab2e55c191e6eee56f3d6"></script>
-  <script src="map/static/js/theme.js"></script>
-  <script src="map/static/js/utils.js"></script>
   <script defer src="map/static/js/footprintmap.js"></script>
 
   <script>
     const mapEl = document.getElementById('mainMap');
     const emptyTip = document.getElementById('emptyTip');
 
-    // 从 URL 参数加载数据（支持构建器跳转）
-    function initFromUrl() {
-      const params = new URLSearchParams(location.search);
-      const base64Data = params.get('data');
+    function loadMap(jsonStr) {
+      if (!jsonStr) return;
+      try {
+        const blob = new Blob([jsonStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        mapEl.setAttribute('data-json', url);
+        emptyTip.style.display = 'none';
 
-      if (base64Data) {
-        try {
-          const jsonStr = decodeURIComponent(escape(atob(base64Data)));
-          const blob = new Blob([jsonStr], {type: 'application/json'});
-          const url = URL.createObjectURL(blob);
-          
-          mapEl.setAttribute('data-json', url);
-          emptyTip.style.display = 'none';
-
-          if (window.FootprintMap && window.FootprintMap.bootstrapMap) {
-            window.FootprintMap.bootstrapMap(mapEl);
-          }
-        } catch (err) {
-          console.error(err);
-          alert('数据加载失败，请重新从构建器打开');
+        if (window.FootprintMap && window.FootprintMap.bootstrapMap) {
+          setTimeout(() => window.FootprintMap.bootstrapMap(mapEl), 100);
         }
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    // 手动上传 JSON
+    // 从构建器接收数据
+    window.onload = () => {
+      const params = new URLSearchParams(location.search);
+      const base64 = params.get('data');
+
+      if (base64) {
+        try {
+          const jsonText = decodeURIComponent(escape(atob(base64)));
+          loadMap(jsonText);
+        } catch (err) {
+          console.error(err);
+          alert('数据解析失败');
+        }
+      }
+    };
+
+    // 手动加载
     document.getElementById('loadBtn').onclick = () => document.getElementById('fileInput').click();
     document.getElementById('fileInput').onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
-        const blob = new Blob([reader.result], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        mapEl.setAttribute('data-json', url);
-        emptyTip.style.display = 'none';
-        if (window.FootprintMap && window.FootprintMap.bootstrapMap) {
-          window.FootprintMap.bootstrapMap(mapEl);
-        }
-      };
+      reader.onload = () => loadMap(reader.result);
       reader.readAsText(file);
     };
-
-    // 初始化
-    window.onload = initFromUrl;
   </script>
 </body>
 </html>
