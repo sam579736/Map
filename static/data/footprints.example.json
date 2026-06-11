@@ -25,7 +25,8 @@
       "urlLabel": "给我留言",
       "categories": [
         "常驻"
-      ]
+      ],
+      "markerColor": "sunset"
     }
   ]
 }
