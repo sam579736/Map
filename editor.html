@@ -6,6 +6,29 @@
   <title>足迹数据构建器</title>
   <link rel="stylesheet" href="static/css/footprintmap.css" />
   <link rel="icon" href="data:;base64,=">
+<script>
+    const CORRECT_PASSWORD = "579736";   // 修改为你想要的密码
+    
+    function verifyAccess() {
+        if (sessionStorage.getItem("editor_access") === "true") {
+            return;
+        }
+        
+        const password = prompt("🔒 请输入编辑器访问密码：");
+        
+        if (password === CORRECT_PASSWORD) {
+            sessionStorage.setItem("editor_access", "true");
+        } else {
+            alert("❌ 密码错误！正在返回首页...");
+            setTimeout(() => {
+                window.location.href = "index.html";
+            }, 800);
+        }
+    }
+    
+    // 执行验证
+    verifyAccess();
+</script>
   <script defer src="https://tongji.xiaoten.com/random-string.js" data-website-id="310ac8bc-25e0-4f76-95fb-31797490c73a"></script>
   <style>
     /* Improve mobile layout and input behavior */
